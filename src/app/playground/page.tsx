@@ -9,7 +9,87 @@ import {
   EyeOff,
   ChevronUp,
   ChevronDown,
+  Eraser,
+  Undo,
+  ImageIcon,
 } from "lucide-react";
+
+const ChatPanel = () => {
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<
+    { sender: "user" | "ai"; text: string }[]
+  >([]);
+  const [loading, setLoading] = useState(false);
+
+  const sendMessage = async () => {
+    if (!input.trim()) return;
+    const userMsg = { sender: "user" as const, text: input };
+    setMessages((prev) => [...prev, userMsg]);
+    setInput("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: input }),
+      });
+
+      const data = await res.json();
+      const aiMsg = {
+        sender: "ai" as const,
+        text: data.text || "Sorry, I couldn't generate a response.",
+      };
+      setMessages((prev) => [...prev, aiMsg]);
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        { sender: "ai", text: "Error connecting to AI service." },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+      <div className="flex-none p-4 border-b font-semibold text-lg">
+        AI Assistant
+      </div>
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        {messages.map((msg, idx) => (
+          <div
+            key={idx}
+            className={`p-2 rounded-lg text-sm ${
+              msg.sender === "user"
+                ? "bg-blue-100 text-blue-800 self-end ml-8"
+                : "bg-gray-100 text-gray-700 mr-8"
+            }`}
+          >
+            {msg.text}
+          </div>
+        ))}
+        {loading && <div className="text-gray-400 text-sm">Thinking...</div>}
+      </div>
+      <div className="flex-none p-3 border-t flex gap-2">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Ask AI..."
+          className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm"
+          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+        />
+        <button
+          onClick={sendMessage}
+          className="bg-blue-500 text-white px-3 py-2 rounded text-sm hover:bg-blue-600"
+        >
+          Send
+        </button>
+      </div>
+    </div>
+  );
+};
 
 type Layer = {
   id: string;
@@ -26,6 +106,7 @@ type Layer = {
   opacity: number;
   visible: boolean;
   imageData?: HTMLImageElement;
+  originalImageData?: HTMLImageElement;
 };
 
 type ResizeHandle = "tl" | "tr" | "bl" | "br" | null;
@@ -37,6 +118,10 @@ const LayerflowEditor: React.FC = () => {
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [isResizing, setIsResizing] = useState<boolean>(false);
   const [resizeHandle, setResizeHandle] = useState<ResizeHandle>(null);
+  const [showPromptModal, setShowPromptModal] = useState(false);
+  const [promptText, setPromptText] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({
     x: 0,
     y: 0,
@@ -95,33 +180,28 @@ const LayerflowEditor: React.FC = () => {
         if (layer.type === "image") {
           ctx.strokeRect(layer.x, layer.y, layer.width!, layer.height!);
 
-          // Draw resize handles
           ctx.setLineDash([]);
           ctx.fillStyle = "#3b82f6";
           const handleSize = 8;
 
-          // Top-left
           ctx.fillRect(
             layer.x - handleSize / 2,
             layer.y - handleSize / 2,
             handleSize,
             handleSize
           );
-          // Top-right
           ctx.fillRect(
             layer.x + layer.width! - handleSize / 2,
             layer.y - handleSize / 2,
             handleSize,
             handleSize
           );
-          // Bottom-left
           ctx.fillRect(
             layer.x - handleSize / 2,
             layer.y + layer.height! - handleSize / 2,
             handleSize,
             handleSize
           );
-          // Bottom-right
           ctx.fillRect(
             layer.x + layer.width! - handleSize / 2,
             layer.y + layer.height! - handleSize / 2,
@@ -228,28 +308,24 @@ const LayerflowEditor: React.FC = () => {
     const handleSize = 8;
     const threshold = handleSize;
 
-    // Top-left
     if (
       Math.abs(x - layer.x) <= threshold &&
       Math.abs(y - layer.y) <= threshold
     ) {
       return "tl";
     }
-    // Top-right
     if (
       Math.abs(x - (layer.x + layer.width)) <= threshold &&
       Math.abs(y - layer.y) <= threshold
     ) {
       return "tr";
     }
-    // Bottom-left
     if (
       Math.abs(x - layer.x) <= threshold &&
       Math.abs(y - (layer.y + layer.height)) <= threshold
     ) {
       return "bl";
     }
-    // Bottom-right
     if (
       Math.abs(x - (layer.x + layer.width)) <= threshold &&
       Math.abs(y - (layer.y + layer.height)) <= threshold
@@ -269,7 +345,6 @@ const LayerflowEditor: React.FC = () => {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // Check if clicking on a resize handle of the selected layer
     const selectedLayer = layers.find((l) => l.id === selectedLayerId);
     if (selectedLayer && selectedLayer.type === "image") {
       const handle = getResizeHandle(x, y, selectedLayer);
@@ -288,7 +363,6 @@ const LayerflowEditor: React.FC = () => {
       }
     }
 
-    // Check for layer selection
     for (let i = layers.length - 1; i >= 0; i--) {
       const layer = layers[i];
       if (!layer.visible) continue;
@@ -333,7 +407,6 @@ const LayerflowEditor: React.FC = () => {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // Handle resizing
     if (isResizing && draggedLayer && resizeHandle) {
       const dx = x - dragOffset.x;
       const dy = y - dragOffset.y;
@@ -348,21 +421,21 @@ const LayerflowEditor: React.FC = () => {
           let newY = initialSize.y;
 
           switch (resizeHandle) {
-            case "br": // Bottom-right
+            case "br":
               newWidth = initialSize.width + dx;
               newHeight = initialSize.height + dy;
               break;
-            case "bl": // Bottom-left
+            case "bl":
               newWidth = initialSize.width - dx;
               newHeight = initialSize.height + dy;
               newX = initialSize.x + dx;
               break;
-            case "tr": // Top-right
+            case "tr":
               newWidth = initialSize.width + dx;
               newHeight = initialSize.height - dy;
               newY = initialSize.y + dy;
               break;
-            case "tl": // Top-left
+            case "tl":
               newWidth = initialSize.width - dx;
               newHeight = initialSize.height - dy;
               newX = initialSize.x + dx;
@@ -370,7 +443,6 @@ const LayerflowEditor: React.FC = () => {
               break;
           }
 
-          // Maintain minimum size
           if (newWidth < 20) newWidth = 20;
           if (newHeight < 20) newHeight = 20;
 
@@ -386,7 +458,6 @@ const LayerflowEditor: React.FC = () => {
       return;
     }
 
-    // Handle dragging
     if (isDragging && draggedLayer) {
       setLayers((prev) =>
         prev.map((layer) =>
@@ -398,7 +469,6 @@ const LayerflowEditor: React.FC = () => {
       return;
     }
 
-    // Update cursor based on hover
     const selectedLayer = layers.find((l) => l.id === selectedLayerId);
     if (selectedLayer && selectedLayer.type === "image") {
       const handle = getResizeHandle(x, y, selectedLayer);
@@ -484,11 +554,129 @@ const LayerflowEditor: React.FC = () => {
     link.click();
   };
 
+  const handleGenerateImage = async () => {
+    setShowPromptModal(true);
+  };
+
+  const generateImage = async () => {
+    if (!promptText.trim()) return;
+    setIsGenerating(true);
+
+    try {
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: promptText }),
+      });
+
+      if (!res.ok) throw new Error("Failed to generate image");
+      const blob = await res.blob();
+      const imgUrl = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = () => {
+        const newLayer: Layer = {
+          id: Date.now().toString(),
+          type: "image",
+          name: "AI Generated Image",
+          x: 100,
+          y: 100,
+          width: 400,
+          height: 400,
+          opacity: 1,
+          visible: true,
+          imageData: img,
+        };
+        setLayers((prev) => [...prev, newLayer]);
+        setSelectedLayerId(newLayer.id);
+      };
+      img.src = imgUrl;
+    } catch (err) {
+      alert("Error generating image.");
+    } finally {
+      setIsGenerating(false);
+      setShowPromptModal(false);
+      setPromptText("");
+    }
+  };
+
+  const handleRemoveBg = async () => {
+    if (
+      !selectedLayer ||
+      selectedLayer.type !== "image" ||
+      !selectedLayer.imageData
+    ) {
+      alert("Please select an image layer to remove background.");
+      return;
+    }
+
+    setIsRemovingBg(true);
+    try {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d")!;
+      canvas.width = selectedLayer.width!;
+      canvas.height = selectedLayer.height!;
+      ctx.drawImage(selectedLayer.imageData, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob((b) => resolve(b), "image/png")
+      );
+      if (!blob) throw new Error("Failed to create blob");
+
+      const formData = new FormData();
+      formData.append("image", blob, "layer.png");
+
+      const res = await fetch("/api/removebg", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Failed to remove background");
+
+      const outputBlob = await res.blob();
+      const imgUrl = URL.createObjectURL(outputBlob);
+      const newImg = new Image();
+      newImg.onload = () => {
+        setLayers((prev) =>
+          prev.map((layer) =>
+            layer.id === selectedLayer.id
+              ? {
+                  ...layer,
+                  originalImageData: layer.imageData,
+                  imageData: newImg,
+                }
+              : layer
+          )
+        );
+      };
+      newImg.src = imgUrl;
+    } catch (err) {
+      alert("Error removing background.");
+    } finally {
+      setIsRemovingBg(false);
+    }
+  };
+
+  const handleUndo = () => {
+    if (!selectedLayer || !selectedLayer.originalImageData) {
+      alert("Nothing to undo for this layer.");
+      return;
+    }
+
+    setLayers((prev) =>
+      prev.map((layer) =>
+        layer.id === selectedLayer.id
+          ? {
+              ...layer,
+              imageData: layer.originalImageData,
+              originalImageData: undefined,
+            }
+          : layer
+      )
+    );
+  };
+
   const selectedLayer = layers.find((l) => l.id === selectedLayerId);
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Left Sidebar - Layers */}
       <div className="w-64 bg-white border-r border-gray-200 p-4 overflow-y-auto">
         <h2 className="text-lg font-bold mb-4">Layers</h2>
         <div className="space-y-2">
@@ -560,9 +748,7 @@ const LayerflowEditor: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Canvas Area */}
       <div className="flex-1 flex flex-col">
-        {/* Toolbar */}
         <div className="bg-white border-b border-gray-200 p-4 flex gap-2">
           <input
             type="file"
@@ -583,6 +769,34 @@ const LayerflowEditor: React.FC = () => {
           >
             <Type size={16} /> Add Text
           </button>
+          <button
+            onClick={handleGenerateImage}
+            disabled={isGenerating}
+            className={`px-4 py-2 rounded text-white flex items-center gap-2 ${
+              isGenerating ? "bg-gray-400" : "bg-indigo-500 hover:bg-indigo-600"
+            }`}
+          >
+            <ImageIcon size={16} />
+            {isGenerating ? "Generating..." : "Generate Image"}
+          </button>
+
+          <button
+            onClick={handleRemoveBg}
+            disabled={isRemovingBg}
+            className={`px-4 py-2 rounded text-white flex items-center gap-2 ${
+              isRemovingBg ? "bg-gray-400" : "bg-red-500 hover:bg-red-600"
+            }`}
+          >
+            <Eraser size={16} />
+            {isRemovingBg ? "Removing..." : "Remove BG"}
+          </button>
+
+          <button
+            onClick={handleUndo}
+            className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 flex items-center gap-2"
+          >
+            <Undo size={16} /> Undo
+          </button>
           <div className="flex-1" />
           <button
             onClick={exportImage}
@@ -592,7 +806,6 @@ const LayerflowEditor: React.FC = () => {
           </button>
         </div>
 
-        {/* Canvas */}
         <div className="flex-1 flex items-center justify-center p-8 overflow-auto">
           <canvas
             ref={canvasRef}
@@ -608,7 +821,6 @@ const LayerflowEditor: React.FC = () => {
         </div>
       </div>
 
-      {/* Right Sidebar - Properties */}
       <div className="w-64 bg-white border-l border-gray-200 p-4 overflow-y-auto">
         <h2 className="text-lg font-bold mb-4">Properties</h2>
         {selectedLayer ? (
@@ -749,6 +961,35 @@ const LayerflowEditor: React.FC = () => {
           </div>
         )}
       </div>
+      {showPromptModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg w-96">
+            <h3 className="text-lg font-semibold mb-4">Generate Image</h3>
+            <textarea
+              value={promptText}
+              onChange={(e) => setPromptText(e.target.value)}
+              placeholder="Describe the image..."
+              className="w-full border rounded p-2 mb-4 h-24"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowPromptModal(false)}
+                className="px-4 py-2 rounded border"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={generateImage}
+                disabled={isGenerating}
+                className="px-4 py-2 bg-blue-600 text-white rounded"
+              >
+                {isGenerating ? "Generating..." : "Generate"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <ChatPanel />
     </div>
   );
 };
