@@ -19,6 +19,13 @@ declare global {
     editorActions?: {
       generateImage: (prompt: string) => Promise<void>;
       removeBackground: () => Promise<void>;
+      addTextLayer: (text: string) => Promise<void> | void;
+      adjustLayer: (
+        property: "brightness" | "contrast" | "saturation",
+        direction: "increase" | "decrease",
+        amount: number
+      ) => Promise<void> | void;
+      addStroke: (color: string, width: number) => Promise<void> | void;
     };
   }
 }
@@ -47,20 +54,52 @@ const ChatPanel = () => {
 
       const data = await res.json();
 
-      if (data.action === "generateImage" && data.prompt) {
-        setMessages((prev) => [
-          ...prev,
-          { sender: "ai", text: `Generating: ${data.prompt}` },
-        ]);
-        await window.editorActions?.generateImage(data.prompt);
-      } else if (data.action === "removeBackground") {
-        setMessages((prev) => [
-          ...prev,
-          { sender: "ai", text: "Removing background..." },
-        ]);
-        await window.editorActions?.removeBackground();
+      if (Array.isArray(data.actions)) {
+        for (const act of data.actions) {
+          if (act.action === "generateImage" && act.prompt) {
+            setMessages((prev) => [
+              ...prev,
+              { sender: "ai", text: `Generating: ${act.prompt}` },
+            ]);
+            await window.editorActions?.generateImage(act.prompt);
+          } else if (act.action === "removeBackground") {
+            setMessages((prev) => [
+              ...prev,
+              { sender: "ai", text: "Removing background..." },
+            ]);
+            await window.editorActions?.removeBackground();
+          } else if (act.action === "adjustLayer") {
+            setMessages((prev) => [
+              ...prev,
+              {
+                sender: "ai",
+                text: `${
+                  act.direction === "increase" ? "Increasing" : "Decreasing"
+                } ${act.property} by ${act.amount || 10}%`,
+              },
+            ]);
+            await window.editorActions?.adjustLayer?.(
+              act.property,
+              act.direction,
+              act.amount
+            );
+          } else if (act.action === "addTextLayer") {
+            setMessages((prev) => [
+              ...prev,
+              { sender: "ai", text: `Adding text: ${act.text}` },
+            ]);
+            await window.editorActions?.addTextLayer?.(act.text);
+          } else if (act.action === "addStroke") {
+            setMessages((prev) => [
+              ...prev,
+              { sender: "ai", text: `Adding stroke to selected layer.` },
+            ]);
+            await window.editorActions?.addStroke?.(act.color, act.width);
+          } else if (act.action === "message") {
+            setMessages((prev) => [...prev, { sender: "ai", text: act.text }]);
+          }
+        }
       } else {
-        // Fallback to normal text
         setMessages((prev) => [
           ...prev,
           { sender: "ai", text: data.text || "I'm not sure what to do." },
@@ -195,6 +234,14 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
     window.editorActions = {
       generateImage: (prompt: string) => generateImage(prompt),
       removeBackground: () => handleRemoveBg(),
+      addTextLayer: (text: string) => addTextLayerFromAI(text),
+      adjustLayer: (
+        property: "brightness" | "contrast" | "saturation",
+        direction: "increase" | "decrease",
+        amount: number
+      ) => adjustLayerFromAI(property, direction, amount),
+      addStroke: (color: string, width: number) =>
+        addStrokeToSelectedLayer(color, width),
     };
 
     return () => {
@@ -687,6 +734,66 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
 
   const handleGenerateImage = async () => {
     setShowPromptModal(true);
+  };
+
+  const addTextLayerFromAI = (text: string): void => {
+    const newLayer: Layer = {
+      id: Date.now().toString(),
+      type: "text",
+      name: "AI Text",
+      text,
+      x: 200,
+      y: 200,
+      fontSize: 36,
+      fontFamily: "Arial",
+      color: "#000000",
+      strokeColor: "#000000",
+      strokeWidth: 0,
+      opacity: 1,
+      visible: true,
+      italic: false,
+      bold: false,
+      underline: false,
+    };
+    setLayers((prev) => [...prev, newLayer]);
+    setSelectedLayerId(newLayer.id);
+  };
+
+  const adjustLayerFromAI = (
+    property: "brightness" | "contrast" | "saturation",
+    direction: "increase" | "decrease",
+    amount = 10
+  ): void => {
+    const selected = selectedLayerRef.current;
+    if (!selected || selected.type !== "image") {
+      alert("Please select an image layer to adjust.");
+      return;
+    }
+
+    const step = amount / 100;
+    setLayers((prev) =>
+      prev.map((layer) => {
+        if (layer.id !== selected.id) return layer;
+
+        let current = layer[property] ?? 1;
+        const delta = direction === "increase" ? step : -step;
+        const newValue = Math.max(0, current + delta); // prevent negative
+
+        return { ...layer, [property]: newValue };
+      })
+    );
+  };
+
+  const addStrokeToSelectedLayer = (color: string, width: number): void => {
+    const layer = selectedLayerRef.current;
+    if (!layer || layer.type !== "text")
+      return alert("Select a text layer first.");
+
+    setLayers((prev) =>
+      prev.map((l) =>
+        l.id === layer.id ? { ...l, strokeColor: color, strokeWidth: width } : l
+      )
+    );
   };
 
   const generateImage = async (customPrompt?: string) => {
