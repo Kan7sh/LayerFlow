@@ -136,6 +136,11 @@ type Layer = {
   visible: boolean;
   imageData?: HTMLImageElement;
   originalImageData?: HTMLImageElement;
+  strokeColor?: string;
+  strokeWidth?: number;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
 };
 
 type ResizeHandle = "tl" | "tr" | "bl" | "br" | null;
@@ -219,6 +224,11 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
         ctx.font = `${layer.fontSize}px ${layer.fontFamily}`;
         ctx.fillStyle = layer.color!;
         ctx.fillText(layer.text || "", layer.x, layer.y);
+        if (layer.strokeWidth && layer.strokeWidth > 0) {
+          ctx.lineWidth = layer.strokeWidth;
+          ctx.strokeStyle = layer.strokeColor || "#000000";
+          ctx.strokeText(layer.text || "", layer.x, layer.y);
+        }
       }
 
       if (layer.id === selectedLayerId) {
@@ -340,6 +350,8 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
       fontSize: 32,
       fontFamily: "Arial",
       color: "#000000",
+      strokeColor: "#000000",
+      strokeWidth: 0,
       opacity: 1,
       visible: true,
     };
@@ -960,6 +972,37 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
                     value={selectedLayer.color}
                     onChange={(e) =>
                       updateSelectedLayer("color", e.target.value)
+                    }
+                    className="w-full mt-1 h-10 border border-gray-300 rounded"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Stroke Width
+                  </label>
+                  <input
+                    type="number"
+                    value={selectedLayer.strokeWidth ?? 0}
+                    onChange={(e) =>
+                      updateSelectedLayer(
+                        "strokeWidth",
+                        parseInt(e.target.value)
+                      )
+                    }
+                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded"
+                    min="0"
+                    max="20"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Stroke Color
+                  </label>
+                  <input
+                    type="color"
+                    value={selectedLayer.strokeColor || "#000000"}
+                    onChange={(e) =>
+                      updateSelectedLayer("strokeColor", e.target.value)
                     }
                     className="w-full mt-1 h-10 border border-gray-300 rounded"
                   />
