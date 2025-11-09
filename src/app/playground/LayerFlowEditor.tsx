@@ -141,6 +141,10 @@ type Layer = {
   bold?: boolean;
   italic?: boolean;
   underline?: boolean;
+  brightness?: number;
+  contrast?: number;
+  saturation?: number;
+  vignette?: number;
 };
 
 type ResizeHandle = "tl" | "tr" | "bl" | "br" | null;
@@ -213,6 +217,18 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
       ctx.globalAlpha = layer.opacity;
 
       if (layer.type === "image" && layer.imageData) {
+        const {
+          brightness = 1,
+          contrast = 1,
+          saturation = 1,
+          vignette = 0,
+        } = layer;
+
+        ctx.filter = `
+    brightness(${brightness})
+    contrast(${contrast})
+    saturate(${saturation})
+  `;
         ctx.drawImage(
           layer.imageData,
           layer.x,
@@ -220,6 +236,23 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
           layer.width!,
           layer.height!
         );
+
+        if (vignette > 0) {
+          const gradient = ctx.createRadialGradient(
+            layer.x + layer.width! / 2,
+            layer.y + layer.height! / 2,
+            Math.min(layer.width!, layer.height!) / 2,
+            layer.x + layer.width! / 2,
+            layer.y + layer.height! / 2,
+            Math.max(layer.width!, layer.height!) / 1.2
+          );
+          gradient.addColorStop(0, "rgba(0,0,0,0)");
+          gradient.addColorStop(1, `rgba(0,0,0,${vignette})`);
+          ctx.fillStyle = gradient;
+          ctx.fillRect(layer.x, layer.y, layer.width!, layer.height!);
+        }
+
+        ctx.filter = "none";
       } else if (layer.type === "text") {
         let fontStyle = "";
         if (layer.italic) fontStyle += "italic ";
@@ -347,6 +380,10 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
           opacity: 1,
           visible: true,
           imageData: img,
+          brightness: 1,
+          contrast: 1,
+          saturation: 1,
+          vignette: 0,
         };
         setLayers((prev) => [...prev, newLayer]);
         setSelectedLayerId(newLayer.id);
@@ -680,6 +717,10 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
           opacity: 1,
           visible: true,
           imageData: img,
+          brightness: 1,
+          contrast: 1,
+          saturation: 1,
+          vignette: 0,
         };
         setLayers((prev) => [...prev, newLayer]);
         setSelectedLayerId(newLayer.id);
@@ -1155,6 +1196,87 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
                     }
                     className="w-full mt-1 px-2 py-1 border border-gray-300 rounded text-sm"
                   />
+                </div>
+                <div className="space-y-4 mt-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">
+                      Brightness:{" "}
+                      {Math.round((selectedLayer.brightness ?? 1) * 100)}%
+                    </label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="200"
+                      value={(selectedLayer.brightness ?? 1) * 100}
+                      onChange={(e) =>
+                        updateSelectedLayer(
+                          "brightness",
+                          parseInt(e.target.value) / 100
+                        )
+                      }
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">
+                      Contrast:{" "}
+                      {Math.round((selectedLayer.contrast ?? 1) * 100)}%
+                    </label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="200"
+                      value={(selectedLayer.contrast ?? 1) * 100}
+                      onChange={(e) =>
+                        updateSelectedLayer(
+                          "contrast",
+                          parseInt(e.target.value) / 100
+                        )
+                      }
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">
+                      Saturation:{" "}
+                      {Math.round((selectedLayer.saturation ?? 1) * 100)}%
+                    </label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="200"
+                      value={(selectedLayer.saturation ?? 1) * 100}
+                      onChange={(e) =>
+                        updateSelectedLayer(
+                          "saturation",
+                          parseInt(e.target.value) / 100
+                        )
+                      }
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">
+                      Vignette:{" "}
+                      {Math.round((selectedLayer.vignette ?? 0) * 100)}%
+                    </label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={(selectedLayer.vignette ?? 0) * 100}
+                      onChange={(e) =>
+                        updateSelectedLayer(
+                          "vignette",
+                          parseInt(e.target.value) / 100
+                        )
+                      }
+                      className="w-full"
+                    />
+                  </div>
                 </div>
               </div>
             )}
