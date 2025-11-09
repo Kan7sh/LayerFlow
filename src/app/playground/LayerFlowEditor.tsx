@@ -14,6 +14,15 @@ import {
   ImageIcon,
 } from "lucide-react";
 
+declare global {
+  interface Window {
+    editorActions?: {
+      generateImage: (prompt: string) => Promise<void>;
+      removeBackground: () => Promise<void>;
+    };
+  }
+}
+
 const ChatPanel = () => {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<
@@ -23,24 +32,40 @@ const ChatPanel = () => {
 
   const sendMessage = async () => {
     if (!input.trim()) return;
+
     const userMsg = { sender: "user" as const, text: input };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setLoading(true);
 
     try {
-      const res = await fetch("/api/chat", {
+      const res = await fetch("/api/ai-agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: input }),
+        body: JSON.stringify({ message: input }),
       });
 
       const data = await res.json();
-      const aiMsg = {
-        sender: "ai" as const,
-        text: data.text || "Sorry, I couldn't generate a response.",
-      };
-      setMessages((prev) => [...prev, aiMsg]);
+
+      if (data.action === "generateImage" && data.prompt) {
+        setMessages((prev) => [
+          ...prev,
+          { sender: "ai", text: `Generating: ${data.prompt}` },
+        ]);
+        await window.editorActions?.generateImage(data.prompt);
+      } else if (data.action === "removeBackground") {
+        setMessages((prev) => [
+          ...prev,
+          { sender: "ai", text: "Removing background..." },
+        ]);
+        await window.editorActions?.removeBackground();
+      } else {
+        // Fallback to normal text
+        setMessages((prev) => [
+          ...prev,
+          { sender: "ai", text: data.text || "I'm not sure what to do." },
+        ]);
+      }
     } catch (err) {
       setMessages((prev) => [
         ...prev,
@@ -129,6 +154,7 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
   const [promptText, setPromptText] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
+  const selectedLayerRef = useRef<Layer | null>(null);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({
     x: 0,
     y: 0,
@@ -150,6 +176,22 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
   useEffect(() => {
     drawCanvas();
   }, [layers, selectedLayerId]);
+
+  useEffect(() => {
+    selectedLayerRef.current =
+      layers.find((l) => l.id === selectedLayerId) || null;
+  }, [selectedLayerId, layers]);
+
+  useEffect(() => {
+    window.editorActions = {
+      generateImage: (prompt: string) => generateImage(prompt),
+      removeBackground: () => handleRemoveBg(),
+    };
+
+    return () => {
+      window.editorActions = undefined;
+    };
+  }, []);
 
   const drawCanvas = (): void => {
     const canvas = canvasRef.current;
@@ -348,10 +390,8 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
   ): void => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
+    const { x, y } = getMousePos(canvas, e);
+    let layerClicked = false;
     const selectedLayer = layers.find((l) => l.id === selectedLayerId);
     if (selectedLayer && selectedLayer.type === "image") {
       const handle = getResizeHandle(x, y, selectedLayer);
@@ -399,8 +439,12 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
         setDraggedLayer(layer);
         setIsDragging(true);
         setDragOffset({ x: x - layer.x, y: y - layer.y });
+        layerClicked = true;
         break;
       }
+    }
+    if (!layerClicked) {
+      setSelectedLayerId(null);
     }
   };
 
@@ -410,9 +454,7 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const { x, y } = getMousePos(canvas, e);
 
     if (isResizing && draggedLayer && resizeHandle) {
       const dx = x - dragOffset.x;
@@ -493,6 +535,19 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
     canvas.style.cursor = "move";
   };
 
+  const getMousePos = (
+    canvas: HTMLCanvasElement,
+    evt: React.MouseEvent<HTMLCanvasElement>
+  ) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+      x: (evt.clientX - rect.left) * scaleX,
+      y: (evt.clientY - rect.top) * scaleY,
+    };
+  };
+
   const handleCanvasMouseUp = (): void => {
     setIsDragging(false);
     setIsResizing(false);
@@ -565,15 +620,16 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
     setShowPromptModal(true);
   };
 
-  const generateImage = async () => {
-    if (!promptText.trim()) return;
+  const generateImage = async (customPrompt?: string) => {
+    const promptToUse = customPrompt || promptText;
+    if (!promptToUse.trim()) return;
     setIsGenerating(true);
 
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: promptText }),
+        body: JSON.stringify({ prompt: promptToUse }),
       });
 
       if (!res.ok) throw new Error("Failed to generate image");
@@ -607,6 +663,8 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
   };
 
   const handleRemoveBg = async () => {
+    const selectedLayer = selectedLayerRef.current;
+
     if (
       !selectedLayer ||
       selectedLayer.type !== "image" ||
@@ -1005,7 +1063,7 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
                 Cancel
               </button>
               <button
-                onClick={generateImage}
+                onClick={() => generateImage()}
                 disabled={isGenerating}
                 className="px-4 py-2 bg-blue-600 text-white rounded"
               >
