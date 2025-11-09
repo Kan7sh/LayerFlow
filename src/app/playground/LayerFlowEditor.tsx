@@ -221,13 +221,30 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
           layer.height!
         );
       } else if (layer.type === "text") {
-        ctx.font = `${layer.fontSize}px ${layer.fontFamily}`;
+        let fontStyle = "";
+        if (layer.italic) fontStyle += "italic ";
+        if (layer.bold) fontStyle += "bold ";
+        ctx.font = `${fontStyle}${layer.fontSize}px ${layer.fontFamily}`;
         ctx.fillStyle = layer.color!;
-        ctx.fillText(layer.text || "", layer.x, layer.y);
+
+        // Draw stroke first (behind fill)
         if (layer.strokeWidth && layer.strokeWidth > 0) {
           ctx.lineWidth = layer.strokeWidth;
           ctx.strokeStyle = layer.strokeColor || "#000000";
           ctx.strokeText(layer.text || "", layer.x, layer.y);
+        }
+
+        ctx.fillText(layer.text || "", layer.x, layer.y);
+
+        if (layer.underline) {
+          const textMetrics = ctx.measureText(layer.text || "");
+          const underlineY = layer.y + 4;
+          ctx.beginPath();
+          ctx.moveTo(layer.x, underlineY);
+          ctx.lineTo(layer.x + textMetrics.width, underlineY);
+          ctx.lineWidth = Math.max(1, (layer.strokeWidth || 1) / 2);
+          ctx.strokeStyle = layer.color!;
+          ctx.stroke();
         }
       }
 
@@ -354,6 +371,9 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
       strokeWidth: 0,
       opacity: 1,
       visible: true,
+      italic: false,
+      bold: false,
+      underline: false,
     };
     setLayers((prev) => [...prev, newLayer]);
     setSelectedLayerId(newLayer.id);
@@ -1006,6 +1026,63 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
                     }
                     className="w-full mt-1 h-10 border border-gray-300 rounded"
                   />
+                </div>
+                <div className="flex gap-2 items-center">
+                  <label className="text-sm font-medium text-gray-700 w-24">
+                    Font
+                  </label>
+                  <select
+                    value={selectedLayer.fontFamily || "Arial"}
+                    onChange={(e) =>
+                      updateSelectedLayer("fontFamily", e.target.value)
+                    }
+                    className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm"
+                  >
+                    <option value="Arial">Arial</option>
+                    <option value="Roboto">Roboto</option>
+                    <option value="Poppins">Poppins</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Courier New">Courier New</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Verdana">Verdana</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={() =>
+                      updateSelectedLayer("bold", !selectedLayer.bold)
+                    }
+                    className={`px-3 py-1 rounded border text-sm ${
+                      selectedLayer.bold ? "bg-blue-500 text-white" : "bg-white"
+                    }`}
+                  >
+                    B
+                  </button>
+                  <button
+                    onClick={() =>
+                      updateSelectedLayer("italic", !selectedLayer.italic)
+                    }
+                    className={`px-3 py-1 rounded border text-sm italic ${
+                      selectedLayer.italic
+                        ? "bg-blue-500 text-white"
+                        : "bg-white"
+                    }`}
+                  >
+                    I
+                  </button>
+                  <button
+                    onClick={() =>
+                      updateSelectedLayer("underline", !selectedLayer.underline)
+                    }
+                    className={`px-3 py-1 rounded border text-sm underline ${
+                      selectedLayer.underline
+                        ? "bg-blue-500 text-white"
+                        : "bg-white"
+                    }`}
+                  >
+                    U
+                  </button>
                 </div>
               </>
             )}
