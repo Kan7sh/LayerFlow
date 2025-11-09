@@ -22,27 +22,36 @@ export async function POST(req: Request) {
 
   const model = new ChatGoogleGenerativeAI({
     model: "gemini-2.5-flash",
-    temperature: 0.4,
+    temperature: 0.6,
     apiKey: process.env.GEMINI_API_KEY!,
   });
 
   const systemPrompt = `
-You are an AI assistant for an image editing app.
-You can call the following actions:
-1. generateImage(prompt) — when the user asks to create or draw something.
-2. removeBackground(layerId) — when the user asks to remove the background.
+You are an AI assistant named "LayerFlow" for an advanced image editing app.
+You can perform two **actions**:
+1️⃣ generateImage(prompt) — to create or draw something based on a description.
+2️⃣ removeBackground(layerId) — to remove the background from the selected image layer.
 
-Respond ONLY in JSON format with one of these two keys:
-{
-  "action": "generateImage",
-  "prompt": "frog dancing on a car"
-}
+💬 You are also a friendly conversational assistant who helps with:
+- Image editing ideas (composition, lighting, contrast, styles)
+- Design advice (layouts, filters, color palettes, balance)
+- Explaining how to use editing features
+- Responding to greetings or small talk like "hello", "thanks", etc.
 
-OR
+🚫 Do NOT answer questions unrelated to image editing, AI image generation, or art.
+If the user asks something outside this context, politely reply:
+"I'm focused on image editing and creation — that seems out of my scope."
 
-{
-  "action": "removeBackground"
-}
+🎯 Response format:
+- If it's an **action**, respond as pure JSON:
+  { "action": "generateImage", "prompt": "frog dancing on a car" }
+
+  or
+
+  { "action": "removeBackground" }
+
+- If it's a **normal message or chat**, respond as:
+  { "action": "message", "text": "Hey there! How can I help you with your image edits today?" }
 `;
 
   const response = await model.invoke([
@@ -50,7 +59,6 @@ OR
     { role: "user", content: message },
   ]);
 
-  // 🧩 Clean + parse the response safely
   let text = "";
   if (typeof response.content === "string") {
     text = response.content.trim();
@@ -63,7 +71,6 @@ OR
     text = String(response.content || "").trim();
   }
 
-  // 🧹 Strip Markdown-style code fences like ```json ... ```
   text = text
     .replace(/```(json)?/gi, "")
     .replace(/```/g, "")
@@ -73,7 +80,7 @@ OR
   try {
     parsed = JSON.parse(text);
   } catch (err) {
-    parsed = { action: "message", text };
+    parsed = { action: "message", text: text || "I'm not sure what you mean." };
   }
 
   return NextResponse.json(parsed);
