@@ -13,6 +13,8 @@ import {
   Undo,
   ImageIcon,
 } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 declare global {
   interface Window {
@@ -116,42 +118,42 @@ const ChatPanel = () => {
   };
 
   return (
-    <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
-      <div className="flex-none p-4 border-b font-semibold text-lg">
+    <Card className="p-0 w-70 flex flex-col bg-neutral-800 border-neutral-600">
+      <div className="flex-none p-4 border-b border-neutral-600 font-semibold text-lg text-neutral-300">
         AI Assistant
       </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((msg, idx) => (
           <div
             key={idx}
-            className={`p-2 rounded-lg text-sm ${
+            className={`p-2 rounded-lg text-xs ${
               msg.sender === "user"
-                ? "bg-blue-100 text-blue-800 self-end ml-8"
-                : "bg-gray-100 text-gray-700 mr-8"
+                ? "bg-[#f8e5ee] text-black self-end ml-8"
+                : "bg-neutral-100 text-neutral-700 mr-8"
             }`}
           >
             {msg.text}
           </div>
         ))}
-        {loading && <div className="text-gray-400 text-sm">Thinking...</div>}
+        {loading && <div className="text-gray-400 text-xs">Thinking...</div>}
       </div>
-      <div className="flex-none p-3 border-t flex gap-2">
-        <input
+      <div className="flex-none p-3 border-t border-neutral-600 flex gap-2">
+        <Input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask AI..."
-          className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm"
+          className="flex-1 border-neutral-500 rounded-lg px-3 py-2 text-xs text-neutral-300 placeholder-neutral-500"
           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
         />
         <button
           onClick={sendMessage}
-          className="bg-blue-500 text-white px-3 py-2 rounded text-sm hover:bg-blue-600"
+          className="bg-[#b61b44] text-white px-3 text-bold py-2 rounded-lg text-xs hover:bg-[#811f39]"
         >
           Send
         </button>
       </div>
-    </div>
+    </Card>
   );
 };
 type LayerflowEditorProps = {
@@ -384,9 +386,9 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
     height: number
   ): void => {
     const squareSize = 20;
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = "#3b3b3b";
     ctx.fillRect(0, 0, width, height);
-    ctx.fillStyle = "#e5e7eb";
+    ctx.fillStyle = "#262626";
 
     for (let i = 0; i < width; i += squareSize) {
       for (let j = 0; j < height; j += squareSize) {
@@ -921,22 +923,28 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
   const selectedLayer = layers.find((l) => l.id === selectedLayerId);
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <div className="w-64 bg-white border-r border-gray-200 p-4 overflow-y-auto">
-        <h2 className="text-lg font-bold mb-4">Layers</h2>
+    <div className="flex h-screen bg-neutral-900">
+      <Card className="w-60  border-r  p-4  bg-neutral-800 border-neutral-600">
+        <h2 className="text-lg text-neutral-300 font-bold mb-4">Layers</h2>
         <div className="space-y-2">
           {[...layers].reverse().map((layer, idx) => (
             <div
               key={layer.id}
-              className={`p-2 rounded border cursor-pointer ${
+              className={`p-2 rounded-lg border border-neutral-600 cursor-pointer ${
                 layer.id === selectedLayerId
-                  ? "border-blue-500 bg-blue-50"
+                  ? "border-[#b61b44] bg-[#5d002b]"
                   : "border-gray-200 hover:border-gray-300"
               }`}
               onClick={() => setSelectedLayerId(layer.id)}
             >
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium truncate flex-1">
+                <span
+                  className={`text-xs ${
+                    layer.id === selectedLayerId
+                      ? "text-neutral-300"
+                      : "text-neutral-300"
+                  } font-medium truncate flex-1 `}
+                >
                   {layer.name || layer.text || "Layer"}
                 </span>
                 <div className="flex gap-1">
@@ -947,7 +955,11 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
                     }}
                     className="p-1 hover:bg-gray-200 rounded"
                   >
-                    {layer.visible ? <Eye size={14} /> : <EyeOff size={14} />}
+                    {layer.visible ? (
+                      <Eye size={14} className="text-neutral-500" />
+                    ) : (
+                      <EyeOff size={14} className="text-neutral-500" />
+                    )}
                   </button>
                   <button
                     onClick={(e) => {
@@ -957,7 +969,7 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
                     className="p-1 hover:bg-gray-200 rounded"
                     disabled={layers.length - 1 - idx === layers.length - 1}
                   >
-                    <ChevronUp size={14} />
+                    <ChevronUp size={14} className="text-neutral-500" />
                   </button>
                   <button
                     onClick={(e) => {
@@ -967,7 +979,7 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
                     className="p-1 hover:bg-gray-200 rounded"
                     disabled={layers.length - 1 - idx === 0}
                   >
-                    <ChevronDown size={14} />
+                    <ChevronDown size={14} className="text-neutral-500" />
                   </button>
                   <button
                     onClick={(e) => {
@@ -986,15 +998,15 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
             </div>
           ))}
           {layers.length === 0 && (
-            <div className="text-sm text-gray-400 text-center py-8">
+            <div className="text-xs text-gray-400 text-center py-8">
               No layers yet
             </div>
           )}
         </div>
-      </div>
+      </Card>
 
-      <div className="flex-1 flex flex-col">
-        <div className="bg-white border-b border-gray-200 p-4 flex gap-2">
+      <Card className="flex-1 flex flex-col bg-neutral-800 border-neutral-600">
+        <div className="border-neutral-600 border-b  p-4 flex gap-2">
           <input
             type="file"
             ref={fileInputRef}
@@ -1004,17 +1016,17 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center gap-2"
+            className="px-4 py-2 bg-[#b61b44] text-white rounded-xl hover:bg-[#811f39] text-xs flex items-center gap-2"
           >
             <Upload size={16} /> Add Image
           </button>
           <button
             onClick={addTextLayer}
-            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 flex items-center gap-2"
+            className="px-4 py-2 bg-[#b61b44] text-white rounded-xl text-xs hover:bg-[#811f39] flex items-center gap-2"
           >
             <Type size={16} /> Add Text
           </button>
-          <button
+          {/* <button
             onClick={handleGenerateImage}
             disabled={isGenerating}
             className={`px-4 py-2 rounded text-white flex items-center gap-2 ${
@@ -1023,9 +1035,9 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
           >
             <ImageIcon size={16} />
             {isGenerating ? "Generating..." : "Generate Image"}
-          </button>
+          </button> */}
 
-          <button
+          {/* <button
             onClick={handleRemoveBg}
             disabled={isRemovingBg}
             className={`px-4 py-2 rounded text-white flex items-center gap-2 ${
@@ -1034,18 +1046,18 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
           >
             <Eraser size={16} />
             {isRemovingBg ? "Removing..." : "Remove BG"}
-          </button>
+          </button> */}
 
           <button
             onClick={handleUndo}
-            className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 flex items-center gap-2"
+            className="px-4 py-2 bg-[#b61b44] text-xs text-white rounded-lg hover:bg-[#811f39] flex items-center gap-2"
           >
             <Undo size={16} /> Undo
           </button>
           <div className="flex-1" />
           <button
             onClick={exportImage}
-            className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 flex items-center gap-2"
+            className="px-4 py-2 bg-[#b61b44] text-white rounded-lg text-xs hover:bg-[#811f39] flex items-center gap-2"
           >
             <Download size={16} /> Export
           </button>
@@ -1071,7 +1083,7 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
               onMouseUp={handleCanvasMouseUp}
               onMouseLeave={handleCanvasMouseUp}
               onDoubleClick={handleCanvasDoubleClick}
-              className="border border-gray-300 shadow-lg cursor-move"
+              className=" shadow-lg cursor-move"
               style={{
                 maxWidth: "100%",
                 maxHeight: "100%",
@@ -1083,28 +1095,28 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
             />
           </div>
         </div>
-      </div>
+      </Card>
 
-      <div className="w-64 bg-white border-l border-gray-200 p-4 overflow-y-auto">
-        <h2 className="text-lg font-bold mb-4">Properties</h2>
+      <Card className="w-64 border-l  p-4 overflow-y-auto bg-neutral-800 border-neutral-600">
+        <h2 className="text-lg font-bold mb-4 text-neutral-300">Properties</h2>
         {selectedLayer ? (
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-gray-700">
+              <label className="text-xs font-medium text-neutral-400">
                 Layer Name
               </label>
-              <input
+              <Input
                 type="text"
                 value={selectedLayer.name || selectedLayer.text || ""}
                 onChange={(e) => updateSelectedLayer("name", e.target.value)}
-                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded"
+                className=" text-xs w-full mt-1 px-3 py-2 border-neutral-500 text-neutral-300  rounded-lg"
               />
             </div>
 
             {selectedLayer.type === "text" && (
               <>
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-xs font-medium text-neutral-400">
                     Text
                   </label>
                   <input
@@ -1113,11 +1125,11 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
                     onChange={(e) =>
                       updateSelectedLayer("text", e.target.value)
                     }
-                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded"
+                    className=" text-xs w-full mt-1 px-3 py-2 border border-neutral-500 text-neutral-300  rounded-lg"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-xs font-medium text-neutral-400">
                     Font Size
                   </label>
                   <input
@@ -1126,26 +1138,26 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
                     onChange={(e) =>
                       updateSelectedLayer("fontSize", parseInt(e.target.value))
                     }
-                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded"
+                    className=" text-xs w-full mt-1 px-3 py-2 border border-neutral-500 text-neutral-300  rounded-lg"
                     min="8"
                     max="200"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-xs font-medium text-neutral-400">
                     Color
                   </label>
-                  <input
+                  <Input
                     type="color"
                     value={selectedLayer.color}
                     onChange={(e) =>
                       updateSelectedLayer("color", e.target.value)
                     }
-                    className="w-full mt-1 h-10 border border-gray-300 rounded"
+                    className=" text-xs w-full mt-1 px-3 py-2 border border-neutral-500 text-neutral-300  rounded-lg"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-xs font-medium text-neutral-400">
                     Stroke Width
                   </label>
                   <input
@@ -1157,26 +1169,26 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
                         parseInt(e.target.value)
                       )
                     }
-                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded"
+                    className=" text-xs w-full mt-1 px-3 py-2 border border-neutral-500 text-neutral-300  rounded-lg"
                     min="0"
                     max="20"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-xs font-medium text-neutral-400">
                     Stroke Color
                   </label>
-                  <input
+                  <Input
                     type="color"
                     value={selectedLayer.strokeColor || "#000000"}
                     onChange={(e) =>
                       updateSelectedLayer("strokeColor", e.target.value)
                     }
-                    className="w-full mt-1 h-10 border border-gray-300 rounded"
+                    className=" text-xs w-full mt-1 px-3 py-2 border border-neutral-500 text-neutral-300  rounded-lg"
                   />
                 </div>
                 <div className="flex gap-2 items-center">
-                  <label className="text-sm font-medium text-gray-700 w-24">
+                  <label className="text-xs font-medium text-neutral-400 w-24">
                     Font
                   </label>
                   <select
@@ -1184,7 +1196,7 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
                     onChange={(e) =>
                       updateSelectedLayer("fontFamily", e.target.value)
                     }
-                    className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm"
+                    className="flex-1 border border-neutral-500 text-neutral-300 rounded px-2 py-1 text-xs"
                   >
                     <option value="Arial">Arial</option>
                     <option value="Roboto">Roboto</option>
@@ -1201,7 +1213,7 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
                     onClick={() =>
                       updateSelectedLayer("bold", !selectedLayer.bold)
                     }
-                    className={`px-3 py-1 rounded border text-sm ${
+                    className={`px-3 py-1 rounded border text-xs ${
                       selectedLayer.bold ? "bg-blue-500 text-white" : "bg-white"
                     }`}
                   >
@@ -1211,7 +1223,7 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
                     onClick={() =>
                       updateSelectedLayer("italic", !selectedLayer.italic)
                     }
-                    className={`px-3 py-1 rounded border text-sm italic ${
+                    className={`px-3 py-1 rounded border text-xs italic ${
                       selectedLayer.italic
                         ? "bg-blue-500 text-white"
                         : "bg-white"
@@ -1223,7 +1235,7 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
                     onClick={() =>
                       updateSelectedLayer("underline", !selectedLayer.underline)
                     }
-                    className={`px-3 py-1 rounded border text-sm underline ${
+                    className={`px-3 py-1 rounded border text-xs underline ${
                       selectedLayer.underline
                         ? "bg-blue-500 text-white"
                         : "bg-white"
@@ -1236,7 +1248,7 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
             )}
 
             <div>
-              <label className="text-sm font-medium text-gray-700">
+              <label className="text-xs font-medium text-neutral-400">
                 Opacity: {Math.round(selectedLayer.opacity * 100)}%
               </label>
               <input
@@ -1247,31 +1259,35 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
                 onChange={(e) =>
                   updateSelectedLayer("opacity", parseInt(e.target.value) / 100)
                 }
-                className="w-full mt-1"
+                className="w-full mt-1 accent-[#7b0d1e] border-none"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-sm font-medium text-gray-700">X</label>
-                <input
+                <label className="text-xs font-medium text-neutral-400">
+                  X
+                </label>
+                <Input
                   type="number"
                   value={Math.round(selectedLayer.x)}
                   onChange={(e) =>
                     updateSelectedLayer("x", parseInt(e.target.value))
                   }
-                  className="w-full mt-1 px-2 py-1 border border-gray-300 rounded text-sm"
+                  className="w-full mt-1 px-2 py-1 border  rounded-lg text-xs border-neutral-500 text-neutral-300"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Y</label>
-                <input
+                <label className="text-xs font-medium text-neutral-400">
+                  Y
+                </label>
+                <Input
                   type="number"
                   value={Math.round(selectedLayer.y)}
                   onChange={(e) =>
                     updateSelectedLayer("y", parseInt(e.target.value))
                   }
-                  className="w-full mt-1 px-2 py-1 border border-gray-300 rounded text-sm"
+                  className="w-full mt-1 px-2 py-1 border border-neutral-500 rounded-lg text-xs text-neutral-300"
                 />
               </div>
             </div>
@@ -1279,7 +1295,7 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
             {selectedLayer.type === "image" && (
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-xs font-medium text-neutral-400">
                     Width
                   </label>
                   <input
@@ -1288,112 +1304,108 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
                     onChange={(e) =>
                       updateSelectedLayer("width", parseInt(e.target.value))
                     }
-                    className="w-full mt-1 px-2 py-1 border border-gray-300 rounded text-sm"
+                    className="w-full mt-1 px-2 py-1 border border-neutral-500 rounded-lg text-neutral-300 text-xs"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-xs font-medium text-neutral-400">
                     Height
                   </label>
-                  <input
+                  <Input
                     type="number"
                     value={Math.round(selectedLayer.height || 0)}
                     onChange={(e) =>
                       updateSelectedLayer("height", parseInt(e.target.value))
                     }
-                    className="w-full mt-1 px-2 py-1 border border-gray-300 rounded text-sm"
+                    className="w-full mt-1 px-2 py-1 border border-neutral-500 rounded-lg text-neutral-300 text-xs"
                   />
                 </div>
-                <div className="space-y-4 mt-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">
-                      Brightness:{" "}
-                      {Math.round((selectedLayer.brightness ?? 1) * 100)}%
-                    </label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="200"
-                      value={(selectedLayer.brightness ?? 1) * 100}
-                      onChange={(e) =>
-                        updateSelectedLayer(
-                          "brightness",
-                          parseInt(e.target.value) / 100
-                        )
-                      }
-                      className="w-full"
-                    />
-                  </div>
+                <div>
+                  <label className="text-xs font-medium text-neutral-400">
+                    Brightness:{" "}
+                    {Math.round((selectedLayer.brightness ?? 1) * 100)}%
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="200"
+                    value={(selectedLayer.brightness ?? 1) * 100}
+                    onChange={(e) =>
+                      updateSelectedLayer(
+                        "brightness",
+                        parseInt(e.target.value) / 100
+                      )
+                    }
+                    className="w-full mt-1 accent-[#7b0d1e] border-none"
+                  />
+                </div>
 
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">
-                      Contrast:{" "}
-                      {Math.round((selectedLayer.contrast ?? 1) * 100)}%
-                    </label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="200"
-                      value={(selectedLayer.contrast ?? 1) * 100}
-                      onChange={(e) =>
-                        updateSelectedLayer(
-                          "contrast",
-                          parseInt(e.target.value) / 100
-                        )
-                      }
-                      className="w-full"
-                    />
-                  </div>
+                <div>
+                  <label className="text-xs font-medium text-neutral-400">
+                    Contrast: {Math.round((selectedLayer.contrast ?? 1) * 100)}%
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="200"
+                    value={(selectedLayer.contrast ?? 1) * 100}
+                    onChange={(e) =>
+                      updateSelectedLayer(
+                        "contrast",
+                        parseInt(e.target.value) / 100
+                      )
+                    }
+                    className="w-full mt-1 accent-[#7b0d1e] border-none"
+                  />
+                </div>
 
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">
-                      Saturation:{" "}
-                      {Math.round((selectedLayer.saturation ?? 1) * 100)}%
-                    </label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="200"
-                      value={(selectedLayer.saturation ?? 1) * 100}
-                      onChange={(e) =>
-                        updateSelectedLayer(
-                          "saturation",
-                          parseInt(e.target.value) / 100
-                        )
-                      }
-                      className="w-full"
-                    />
-                  </div>
+                <div>
+                  <label className="text-xs font-medium text-neutral-400">
+                    Saturation:{" "}
+                    {Math.round((selectedLayer.saturation ?? 1) * 100)}%
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="200"
+                    value={(selectedLayer.saturation ?? 1) * 100}
+                    onChange={(e) =>
+                      updateSelectedLayer(
+                        "saturation",
+                        parseInt(e.target.value) / 100
+                      )
+                    }
+                    className="w-full mt-1 accent-[#7b0d1e] border-none"
+                  />
+                </div>
 
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">
-                      Vignette:{" "}
-                      {Math.round((selectedLayer.vignette ?? 0) * 100)}%
-                    </label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={(selectedLayer.vignette ?? 0) * 100}
-                      onChange={(e) =>
-                        updateSelectedLayer(
-                          "vignette",
-                          parseInt(e.target.value) / 100
-                        )
-                      }
-                      className="w-full"
-                    />
-                  </div>
+                <div>
+                  <label className="text-xs font-medium text-neutral-400">
+                    Vignette: {Math.round((selectedLayer.vignette ?? 0) * 100)}%
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={(selectedLayer.vignette ?? 0) * 100}
+                    onChange={(e) =>
+                      updateSelectedLayer(
+                        "vignette",
+                        parseInt(e.target.value) / 100
+                      )
+                    }
+                    className="w-full mt-1 accent-[#7b0d1e] border-none"
+                  />
                 </div>
               </div>
             )}
           </div>
         ) : (
-          <div className="text-sm text-gray-400 text-center py-8">
+          <div className="text-xs text-gray-400 text-center py-8">
             Select a layer to edit properties
           </div>
         )}
-      </div>
+      </Card>
       {showPromptModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg w-96">

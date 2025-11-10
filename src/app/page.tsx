@@ -1,6 +1,5 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
 import { FcGoogle } from "react-icons/fc";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -83,7 +82,6 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Custom input */}
             <div className="flex items-center gap-2 mb-4">
               <input
                 type="number"
