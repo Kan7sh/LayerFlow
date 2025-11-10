@@ -1005,7 +1005,7 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
         </div>
       </Card>
 
-      <Card className="flex-1 flex flex-col bg-neutral-800 border-neutral-600">
+      <Card className="flex-1 flex flex-col bg-neutral-800 border-neutral-600 p-0">
         <div className="border-neutral-600 border-b  p-4 flex gap-2">
           <input
             type="file"
@@ -1016,13 +1016,13 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="px-4 py-2 bg-[#b61b44] text-white rounded-xl hover:bg-[#811f39] text-xs flex items-center gap-2"
+            className="px-4 py-2 bg-[#b61b44] text-white rounded-lg hover:bg-[#811f39] text-xs flex items-center gap-2"
           >
             <Upload size={16} /> Add Image
           </button>
           <button
             onClick={addTextLayer}
-            className="px-4 py-2 bg-[#b61b44] text-white rounded-xl text-xs hover:bg-[#811f39] flex items-center gap-2"
+            className="px-4 py-2 bg-[#b61b44] text-white rounded-lg text-xs hover:bg-[#811f39] flex items-center gap-2"
           >
             <Type size={16} /> Add Text
           </button>
