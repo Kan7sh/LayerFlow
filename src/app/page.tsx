@@ -4,6 +4,7 @@ import { FcGoogle } from "react-icons/fc";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import DarkVeil from "@/components/background/DarkVeil";
 
 export default function Home() {
   const router = useRouter();
@@ -40,90 +41,98 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen w-screen flex justify-center items-center bg-gray-50">
-      {!session && (
-        <Button className="cursor-pointer" onClick={signinWithGoogle}>
-          <FcGoogle className="w-6 h-6 mr-2" /> Login with Google
-        </Button>
-      )}
+    <div className="relative h-screen w-screen bg-black overflow-hidden">
+      {/* Aurora background */}
+      <div className="absolute inset-0 z-0">
+        <DarkVeil colorStops={["#811f39", "#cf486c", "#b61b44"]} />
+      </div>
 
-      {session && (
-        <div className="flex flex-col gap-5">
-          <Button onClick={() => setShowModal(true)}>Playground</Button>
-          <Button onClick={logout}>Logout</Button>
-        </div>
-      )}
+      {/* Your content — above the aurora */}
+      <div className="relative z-10 flex justify-center items-center h-full">
+        {!session && (
+          <Button className="cursor-pointer" onClick={signinWithGoogle}>
+            <FcGoogle className="w-6 h-6 mr-2" /> Login with Google
+          </Button>
+        )}
 
-      {/* Modal for size selection */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-[450px]">
-            <h2 className="text-lg font-semibold mb-4">
-              🖼️ Choose Canvas Size
-            </h2>
+        {session && (
+          <div className="flex flex-col gap-5">
+            <Button onClick={() => setShowModal(true)}>Playground</Button>
+            <Button onClick={logout}>Logout</Button>
+          </div>
+        )}
 
-            <div className="grid grid-cols-1 gap-3 mb-4">
-              {aspectPresets.map((preset) => (
-                <button
-                  key={preset.name}
-                  onClick={() => {
-                    setSelectedPreset(preset.name);
-                    setWidth(preset.width);
-                    setHeight(preset.height);
+        {/* Modal */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-[450px]">
+              <h2 className="text-lg font-semibold mb-4">
+                🖼️ Choose Canvas Size
+              </h2>
+
+              <div className="grid grid-cols-1 gap-3 mb-4">
+                {aspectPresets.map((preset) => (
+                  <button
+                    key={preset.name}
+                    onClick={() => {
+                      setSelectedPreset(preset.name);
+                      setWidth(preset.width);
+                      setHeight(preset.height);
+                    }}
+                    className={`px-4 py-2 rounded border text-sm text-left ${
+                      selectedPreset === preset.name
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-300 hover:bg-gray-100"
+                    }`}
+                  >
+                    {preset.name} ({preset.width}×{preset.height})
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-2 mb-4">
+                <input
+                  type="number"
+                  placeholder="Width"
+                  value={width}
+                  onChange={(e) => {
+                    setSelectedPreset("custom");
+                    setWidth(Number(e.target.value));
                   }}
-                  className={`px-4 py-2 rounded border text-sm text-left ${
-                    selectedPreset === preset.name
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-300 hover:bg-gray-100"
-                  }`}
+                  className="w-1/2 px-3 py-2 border rounded"
+                />
+                <span className="text-gray-600">×</span>
+                <input
+                  type="number"
+                  placeholder="Height"
+                  value={height}
+                  onChange={(e) => {
+                    setSelectedPreset("custom");
+                    setHeight(Number(e.target.value));
+                  }}
+                  className="w-1/2 px-3 py-2 border rounded"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowModal(false)}
+                  className="border-gray-300"
                 >
-                  {preset.name} ({preset.width}×{preset.height})
-                </button>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-2 mb-4">
-              <input
-                type="number"
-                placeholder="Width"
-                value={width}
-                onChange={(e) => {
-                  setSelectedPreset("custom");
-                  setWidth(Number(e.target.value));
-                }}
-                className="w-1/2 px-3 py-2 border rounded"
-              />
-              <span className="text-gray-600">×</span>
-              <input
-                type="number"
-                placeholder="Height"
-                value={height}
-                onChange={(e) => {
-                  setSelectedPreset("custom");
-                  setHeight(Number(e.target.value));
-                }}
-                className="w-1/2 px-3 py-2 border rounded"
-              />
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowModal(false)}
-                className="border-gray-300"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleStartPlayground}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                Start
-              </Button>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleStartPlayground}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Start
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
