@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
-import { removeBackground } from "@imgly/background-removal-node";
-import fs from "fs";
-import path from "path";
 
-export const runtime = "nodejs"; 
+export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   try {
@@ -15,20 +12,25 @@ export async function POST(req: Request) {
     }
 
     const arrayBuffer = await file.arrayBuffer();
-    const inputBuffer = Buffer.from(arrayBuffer);
-    const mimeType = file.type || "image/png";
+    const inputBlob = new Blob([arrayBuffer], { type: file.type });
 
-    console.log("🧠 Removing background...");
+    let removeBackgroundFn: any;
 
-    const blob = new Blob([inputBuffer], { type: mimeType });
-    const outputBlob = await removeBackground(blob);
+    if (process.env.VERCEL === "1") {
+      const { removeBackground } = await import("@imgly/background-removal");
+      removeBackgroundFn = removeBackground;
+      console.log("🧠 Using WASM background remover (Vercel Edge)...");
+    } else {
+      const { removeBackground } = await import(
+        "@imgly/background-removal-node"
+      );
+      removeBackgroundFn = removeBackground;
+      console.log("⚡ Using Node background remover (Local Dev)...");
+    }
 
-    const outputArrayBuffer = await outputBlob.arrayBuffer();
-    const outputBuffer = Buffer.from(outputArrayBuffer);
+    const outputBlob = await removeBackgroundFn(inputBlob);
 
-    const saveDir = path.join(process.cwd(), "public", "processed");
-
-    return new Response(outputBuffer, {
+    return new Response(outputBlob, {
       headers: {
         "Content-Type": "image/png",
         "Content-Disposition": "inline; filename=removed-bg.png",
@@ -37,7 +39,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("❌ Error removing background:", error);
     return NextResponse.json(
-      { error: "Internal server error", details: error.message },
+      { error: "Background removal failed", details: error.message },
       { status: 500 }
     );
   }

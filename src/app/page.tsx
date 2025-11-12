@@ -5,6 +5,10 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import DarkVeil from "@/components/background/DarkVeil";
+import BlurText from "@/components/text/BlurEffect";
+import GlassNavBar from "@/components/ui/GlassmorphNav";
+import homeImage from "@/assets/homeImage.png";
+import Image from "next/image";
 
 export default function Home() {
   const router = useRouter();
@@ -42,27 +46,43 @@ export default function Home() {
 
   return (
     <div className="relative h-screen w-screen bg-black overflow-hidden">
-      {/* Aurora background */}
       <div className="absolute inset-0 z-0">
         <DarkVeil colorStops={["#811f39", "#cf486c", "#b61b44"]} />
       </div>
+      <GlassNavBar />
 
-      {/* Your content — above the aurora */}
-      <div className="relative z-10 flex justify-center items-center h-full">
-        {!session && (
+      <div className="relative z-10 flex flex-col mt-12 justify-center items-center h-full">
+        <BlurText
+          text="Your creative flow, supercharged by AI"
+          delay={150}
+          animateBy="words"
+          className="text-6xl mb-8 font-bold text-white"
+          animationFrom={undefined}
+          animationTo={undefined}
+          onAnimationComplete={undefined}
+        />
+        <div className="relative">
+          <div className="absolute inset-0 rounded-2xl border-[3px] border-[#cf486c] opacity-80 blur-md"></div>
+          <div className="absolute inset-0 rounded-2xl border-[2px] border-[#b61b44] animate-pulse"></div>
+          <Image
+            src={homeImage}
+            alt="AI Image"
+            width={900}
+            className="relative rounded-2xl"
+          />
+        </div>
+
+        {/* {!session && (
           <Button className="cursor-pointer" onClick={signinWithGoogle}>
             <FcGoogle className="w-6 h-6 mr-2" /> Login with Google
           </Button>
         )}
-
         {session && (
           <div className="flex flex-col gap-5">
             <Button onClick={() => setShowModal(true)}>Playground</Button>
             <Button onClick={logout}>Logout</Button>
           </div>
-        )}
-
-        {/* Modal */}
+        )} */}
         {showModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-lg p-6 w-[450px]">

@@ -112,7 +112,6 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-
 @layer base {
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button {
@@ -121,7 +120,6 @@
   }
 }
 
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -129,4 +127,21 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@keyframes borderMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-border-move {
+  background-size: 300% 300%;
+  animation: borderMove 6s ease infinite;
 }
