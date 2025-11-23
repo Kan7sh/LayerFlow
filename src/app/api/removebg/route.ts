@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 
-// Use nodejs runtime for better compatibility with background-removal-node
-export const runtime = "nodejs";
+// Use edge runtime for WASM compatibility on Vercel
+export const runtime = "edge";
 
-// Increase timeout for background removal processing
+// Increase timeout
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {
     console.log("🎯 Starting background removal...");
-    
+
     const formData = await req.formData();
     const file = formData.get("image") as File | null;
 
@@ -17,41 +17,24 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No image uploaded" }, { status: 400 });
     }
 
-    console.log(`📁 File received: ${file.name}, type: ${file.type}, size: ${file.size} bytes`);
+    console.log(
+      `📁 File received: ${file.name}, type: ${file.type}, size: ${file.size} bytes`
+    );
 
-    // Convert file to blob (the library works better with Blob objects)
-    const arrayBuffer = await file.arrayBuffer();
-    const blob = new Blob([arrayBuffer], { type: file.type || "image/png" });
+    // Use WASM version for serverless compatibility
+    const { removeBackground } = await import("@imgly/background-removal");
 
-    // Always use Node.js version for better reliability
-    const { removeBackground } = await import("@imgly/background-removal-node");
-    
-    console.log("⚡ Using Node.js background remover...");
+    console.log("⚡ Using WASM background remover (serverless-compatible)...");
 
-    // Process the image - pass blob with minimal config
-    // The library is picky about configuration, so we use defaults
-    const outputBlob = await removeBackground(blob);
+    // Process the image - WASM version works directly with File objects
+    const outputBlob = await removeBackground(file, {
+      publicPath:
+        "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/",
+    });
 
     console.log("✅ Background removed successfully");
 
-    // Convert the output to buffer
-    let outputBuffer: Buffer;
-    if (outputBlob instanceof Blob) {
-      const ab = await outputBlob.arrayBuffer();
-      outputBuffer = Buffer.from(ab);
-    } else if (Buffer.isBuffer(outputBlob)) {
-      outputBuffer = outputBlob;
-    } else {
-      // Handle Uint8Array or other array buffer views
-      outputBuffer = Buffer.from(outputBlob as any);
-    }
-
-    console.log(`📦 Output size: ${outputBuffer.length} bytes`);
-
-    // Convert the Buffer to Uint8Array so it's accepted as BodyInit by the Web Response
-    const responseBody = new Uint8Array(outputBuffer);
-
-    return new Response(responseBody, {
+    return new Response(outputBlob, {
       headers: {
         "Content-Type": "image/png",
         "Content-Disposition": "inline; filename=removed-bg.png",
@@ -61,12 +44,12 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("❌ Error removing background:", error);
     console.error("Stack trace:", error.stack);
-    
+
     return NextResponse.json(
-      { 
-        error: "Background removal failed", 
+      {
+        error: "Background removal failed",
         details: error.message,
-        stack: process.env.NODE_ENV === "development" ? error.stack : undefined
+        stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
       },
       { status: 500 }
     );
