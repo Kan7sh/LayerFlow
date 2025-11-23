@@ -1,0 +1,5 @@
+{
+  "isnet": "resources/isnet.onnx",
+  "isnet_fp16": "resources/isnet_fp16.onnx",
+  "isnet_quint8": "resources/isnet_quint8.onnx"
+}

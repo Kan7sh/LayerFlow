@@ -905,65 +905,73 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
 
     setIsRemovingBg(true);
     try {
+      // Draw selected image onto a temporary canvas (same as you already do)
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d")!;
       canvas.width = selectedLayer.width!;
       canvas.height = selectedLayer.height!;
       ctx.drawImage(selectedLayer.imageData, 0, 0, canvas.width, canvas.height);
 
-      const blob = await new Promise<Blob | null>((resolve) =>
+      // Convert to Blob
+      const blob: Blob | null = await new Promise((resolve) =>
         canvas.toBlob((b) => resolve(b), "image/png")
       );
 
-      if (!blob) throw new Error("Failed to create blob");
+      if (!blob) throw new Error("Failed to create blob from canvas");
 
-      console.log("Sending image to API, size:", blob.size);
+      console.log(
+        "🛰️ Calling background-removal in browser, blob size:",
+        blob.size
+      );
 
-      const formData = new FormData();
-      formData.append("image", blob, "layer.png");
+      // Dynamic import the browser package
+      const { removeBackground } = await import("@imgly/background-removal");
 
-      const res = await fetch("/api/removebg", {
-        method: "POST",
-        body: formData,
-      });
+      // OPTION 1 — Use default CDN (recommended for quick start)
+      // const outputBlob = await removeBackground(blob);
 
-      console.log("API response status:", res.status);
+      // OPTION 2 — Use self-hosted models from your origin (if you copied models to /models/)
+      // If you use self-hosted models, you can set publicPath to `${location.origin}/models/`
+      // BUT note: some advanced WASM/threaded features require COOP/COEP headers for crossOriginIsolated.
+      // Example:
+      // const config = { publicPath: `${location.origin}/models/`, debug: true };
+      // const outputBlob = await removeBackground(blob, config);
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.details || "Failed to remove background");
-      }
+      // For now use CDN to avoid self-hosting complexity:
+      const outputBlob = await removeBackground(blob, { debug: true });
 
-      const outputBlob = await res.blob();
-      console.log("Received processed image, size:", outputBlob.size);
+      console.log(
+        "✅ Background removal finished, size:",
+        outputBlob.size || "(unknown)"
+      );
 
+      // Convert outputBlob to Image and update layer (same approach as before)
       const imgUrl = URL.createObjectURL(outputBlob);
       const newImg = new Image();
 
-      newImg.onload = () => {
-        console.log("New image loaded successfully");
-        setLayers((prev) =>
-          prev.map((layer) =>
-            layer.id === selectedLayer.id
-              ? {
-                  ...layer,
-                  originalImageData: layer.imageData,
-                  imageData: newImg,
-                }
-              : layer
-          )
-        );
-      };
+      await new Promise<void>((resolve, reject) => {
+        newImg.onload = () => resolve();
+        newImg.onerror = (ev) =>
+          reject(new Error("Failed to load resulting image"));
+        newImg.src = imgUrl;
+      });
 
-      newImg.onerror = (err) => {
-        console.error("Failed to load processed image:", err);
-        alert("Failed to load processed image");
-      };
-
-      newImg.src = imgUrl;
+      // Update layers: keep original in originalImageData for undo
+      setLayers((prev) =>
+        prev.map((layer) =>
+          layer.id === selectedLayer.id
+            ? {
+                ...layer,
+                originalImageData: layer.imageData,
+                imageData: newImg,
+              }
+            : layer
+        )
+      );
+      console.log("Layer updated with processed image");
     } catch (err: any) {
-      console.error("Error details:", err);
-      alert(`Error removing background: ${err.message}`);
+      console.error("Error removing background (client):", err);
+      alert(`Error removing background: ${err.message || err}`);
     } finally {
       setIsRemovingBg(false);
     }
