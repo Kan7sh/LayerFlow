@@ -910,10 +910,14 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
       canvas.width = selectedLayer.width!;
       canvas.height = selectedLayer.height!;
       ctx.drawImage(selectedLayer.imageData, 0, 0, canvas.width, canvas.height);
+
       const blob = await new Promise<Blob | null>((resolve) =>
         canvas.toBlob((b) => resolve(b), "image/png")
       );
+
       if (!blob) throw new Error("Failed to create blob");
+
+      console.log("Sending image to API, size:", blob.size);
 
       const formData = new FormData();
       formData.append("image", blob, "layer.png");
@@ -922,12 +926,22 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
         method: "POST",
         body: formData,
       });
-      if (!res.ok) throw new Error("Failed to remove background");
+
+      console.log("API response status:", res.status);
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.details || "Failed to remove background");
+      }
 
       const outputBlob = await res.blob();
+      console.log("Received processed image, size:", outputBlob.size);
+
       const imgUrl = URL.createObjectURL(outputBlob);
       const newImg = new Image();
+
       newImg.onload = () => {
+        console.log("New image loaded successfully");
         setLayers((prev) =>
           prev.map((layer) =>
             layer.id === selectedLayer.id
@@ -940,9 +954,16 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
           )
         );
       };
+
+      newImg.onerror = (err) => {
+        console.error("Failed to load processed image:", err);
+        alert("Failed to load processed image");
+      };
+
       newImg.src = imgUrl;
-    } catch (err) {
-      alert("Error removing background.");
+    } catch (err: any) {
+      console.error("Error details:", err);
+      alert(`Error removing background: ${err.message}`);
     } finally {
       setIsRemovingBg(false);
     }
