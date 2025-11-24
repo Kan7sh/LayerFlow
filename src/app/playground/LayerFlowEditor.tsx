@@ -1177,13 +1177,13 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
             {/* <div className="flex-1" /> */}
             <button
               onClick={handleUndo}
-              className="px-3 py-2 bg-neutral-700 text-xs text-white rounded-lg hover:bg-neutral-700 flex items-center gap-2"
+              className="px-3 py-2 bg-neutral-700 text-xs text-white rounded-lg hover:bg-neutral-800 flex items-center gap-2"
             >
               <Undo size={14} /> Undo
             </button>
             <button
               onClick={exportImage}
-              className="px-3 py-2 bg-[#24005b] text-white rounded-lg text-xs hover:bg-[#2a0041] flex items-center gap-2"
+              className="px-3 py-2 bg-[#24005b] text-white rounded-lg text-xs hover:bg-[#150034] flex items-center gap-2"
             >
               <Download size={14} /> Export
             </button>

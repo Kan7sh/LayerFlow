@@ -8,7 +8,7 @@ import { FcGoogle } from "react-icons/fc";
 import router from "next/router";
 import { Spinner } from "./spinner";
 
-export default function GlassNavBar() {
+export default function GlassNavBar({ setShowModal }: { setShowModal: any }) {
   const [isGooleLoginLoading, setIsGooleLoginLoading] = useState(false);
   const session = useSession();
   const scrollToAbout = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -29,6 +29,10 @@ export default function GlassNavBar() {
       </div>
     );
   }
+
+  const openPlaygroundModal = () => {
+    setShowModal(true);
+  };
 
   async function logout() {
     await signOut();
@@ -67,15 +71,15 @@ export default function GlassNavBar() {
         </div>
         <div className="hidden md:block">
           <div className="flex flex-row justify-center items-center gap-8">
-            {session.status == "authenticated" && (
+            {/* {session.status == "authenticated" && (
               <a
                 href="#about"
-                onClick={scrollToAbout}
+                onClick={openPlaygroundModal}
                 className="text-sm font-medium text-white"
               >
                 Playground
               </a>
-            )}
+            )} */}
             <a
               href="#about"
               onClick={scrollToAbout}

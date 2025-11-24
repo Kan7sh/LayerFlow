@@ -145,3 +145,64 @@
   background-size: 300% 300%;
   animation: borderMove 6s ease infinite;
 }
+
+/* Glowing moving outer border for the Playground button */
+.playground-glow-wrapper {
+  position: relative;
+  display: inline-block;
+  border-radius: 0.75rem; /* match rounded-xl */
+  padding: 4px; /* space for the glow */
+  /* keep background transparent so glow shows */
+}
+
+/* the animated glowing band */
+.playground-glow-wrapper::before {
+  content: "";
+  position: absolute;
+  inset: -4px; /* sits outside the button */
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    rgba(41, 0, 155, 0.95),
+    rgba(175, 175, 175, 0.9),
+    rgba(15, 0, 178, 0.95),
+    rgba(175, 175, 175, 0.9)
+  );
+  filter: blur(10px); /* soft glow */
+  opacity: 0.9;
+  z-index: 0;
+  background-size: 300% 100%;
+  animation: moveGradient 4s linear infinite;
+  pointer-events: none;
+}
+
+/* an inner rim to separate the glow from the button surface (optional) */
+.playground-glow-wrapper::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 1;
+  /* subtle overlay so the glow isn't directly touching the button text */
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  pointer-events: none;
+}
+
+/* ensure the actual Button is above the glow */
+.playground-glow-wrapper > .relative.z-10 {
+  position: relative;
+  z-index: 2;
+}
+
+/* Keyframes to slide the gradient horizontally */
+@keyframes moveGradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}

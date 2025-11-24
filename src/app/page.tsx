@@ -7,8 +7,17 @@ import React, { useState } from "react";
 import DarkVeil from "@/components/background/DarkVeil";
 import BlurText from "@/components/text/BlurEffect";
 import GlassNavBar from "@/components/ui/GlassmorphNav";
-import homeImage from "@/assets/homeImage.png";
 import Image from "next/image";
+import homeImage from "@/assets/homeImage.png";
+import imageEditing from "@/assets/homeEditing.png";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export default function Home() {
   const router = useRouter();
@@ -50,101 +59,132 @@ export default function Home() {
         <div className="absolute inset-0 z-0">
           <DarkVeil colorStops={["#811f39", "#cf486c", "#b61b44"]} />
         </div>
-        <GlassNavBar />
+        <GlassNavBar setShowModal={setShowModal} />
 
-        <div className="relative z-10 flex flex-col mt-12 justify-center items-center h-full">
-          <BlurText
-            text="Your creative flow, supercharged by AI"
-            delay={150}
-            animateBy="words"
-            className="text-6xl mb-8 font-bold text-white"
-            animationFrom={undefined}
-            animationTo={undefined}
-            onAnimationComplete={undefined}
-          />
-          <div className="relative">
-            <div className="absolute inset-0 rounded-2xl border-[3px] border-[#cf486c] opacity-80 blur-md"></div>
-            <div className="absolute inset-0 rounded-2xl  border-[#b61b44] animate-pulse"></div>
-            <Image
-              src={homeImage}
-              alt="AI Image"
-              width={900}
-              className="relative rounded-2xl"
-            />
-          </div>
-
-          {showModal && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg shadow-lg p-6 w-[450px]">
-                <h2 className="text-lg font-semibold mb-4">
-                  🖼️ Choose Canvas Size
-                </h2>
-
-                <div className="grid grid-cols-1 gap-3 mb-4">
-                  {aspectPresets.map((preset) => (
-                    <button
-                      key={preset.name}
-                      onClick={() => {
-                        setSelectedPreset(preset.name);
-                        setWidth(preset.width);
-                        setHeight(preset.height);
-                      }}
-                      className={`px-4 py-2 rounded border text-sm text-left ${
-                        selectedPreset === preset.name
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-300 hover:bg-gray-100"
-                      }`}
-                    >
-                      {preset.name} ({preset.width}×{preset.height})
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flex items-center gap-2 mb-4">
-                  <input
-                    type="number"
-                    placeholder="Width"
-                    value={width}
-                    onChange={(e) => {
-                      setSelectedPreset("custom");
-                      setWidth(Number(e.target.value));
-                    }}
-                    className="w-1/2 px-3 py-2 border rounded"
-                  />
-                  <span className="text-gray-600">×</span>
-                  <input
-                    type="number"
-                    placeholder="Height"
-                    value={height}
-                    onChange={(e) => {
-                      setSelectedPreset("custom");
-                      setHeight(Number(e.target.value));
-                    }}
-                    className="w-1/2 px-3 py-2 border rounded"
-                  />
-                </div>
-
-                <div className="flex justify-end gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowModal(false)}
-                    className="border-gray-300"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleStartPlayground}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    Start
+        <div className="relative z-10 flex flex-row justify-center items-center h-full  px-6 py-3">
+          <div className=" flex-1  p-6 py-20">
+            <div className="flex flex-col">
+              <BlurText
+                text="Your creative flow, supercharged by AI"
+                delay={150}
+                animateBy="words"
+                className="text-6xl mb-8 font-bold text-white leading-tight"
+                animationFrom={undefined}
+                animationTo={undefined}
+                onAnimationComplete={undefined}
+              />
+              <div className="text-gray-300 text-lg leading-relaxed">
+                Transform your ideas into stunning visuals with AI-powered
+                tools. Experience seamless creativity with intelligent design
+                assistance, real-time collaboration, and limitless possibilities
+                at your fingertips.
+              </div>
+              <div className="mt-4 inline-block">
+                <div className="playground-glow-wrapper rounded-xl">
+                  <Button className="w-50 h-14 bg-[#1a004e] relative z-10 overflow-hidden">
+                    Playground
                   </Button>
                 </div>
               </div>
             </div>
-          )}
+          </div>
+
+          <div
+            className=" flex-1 h-[75vh]"
+            style={{
+              perspective: "700px",
+              perspectiveOrigin: "center",
+            }}
+          >
+            <div
+              className="relative h-full transition-transform duration-500 hover:scale-105"
+              style={{
+                transform: "rotateY(-12deg) rotateX(5deg)",
+                transformStyle: "preserve-3d",
+              }}
+            >
+              {/* Glowing border effects */}
+              <div
+                className="absolute inset-0 rounded-3xl  border-[#cf486c] opacity-70 blur-lg"
+                style={{ transform: "translateZ(-10px)" }}
+              ></div>
+              <div
+                className="absolute inset-0 rounded-3xl border-[#b61b44] animate-pulse"
+                style={{ transform: "translateZ(-5px)" }}
+              ></div>
+
+              {/* Main image - made explicitly rounded */}
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl w-full h-full">
+                <Image
+                  src={homeImage}
+                  alt="AI Image"
+                  fill
+                  className="relative object-cover rounded-3xl"
+                  style={{ transform: "translateZ(0px)" }}
+                  priority
+                />
+              </div>
+
+              {/* Shadow effect */}
+            </div>
+          </div>
         </div>
       </div>
-      <section id="about">This is the about section</section>
+
+      <section id="about" className="bg-black px-6 py-24">
+        <div className="max-w-8xl mx-auto">
+          <div className="bg-linear-to-b from-[#410817] via-[#cf486c]/60 to-[#390614] rounded-2xl p-15 shadow-2xl">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+              <div className="text-left">
+                <h2 className="text-3xl lg:text-4xl font-extrabold text-white mb-4">
+                  What we build
+                </h2>
+                <p className="text-gray-300 mb-6 text-lg leading-relaxed">
+                  An open-source, layer-based image editor crafted for creators
+                  and teams. Add, arrange and style multiple image and text
+                  layers, tweak properties like opacity, blend mode, position
+                  and transforms — all with a smooth, responsive UI. The editor
+                  includes an AI Assistant (powered by LangChain) that helps you
+                  generate images from prompts, remove backgrounds, create and
+                  position text layers, and automate repetitive editing tasks.
+                  Whether you're prototyping designs, cleaning photos, or
+                  generating assets for web and social, our tool makes complex
+                  editing simple and collaborative.
+                </p>
+                <p className="text-gray-400 text-sm">
+                  Fully open-source — fork, extend, and contribute. Built for
+                  extensibility and privacy-conscious collaboration.
+                </p>
+              </div>
+
+              <div className="relative h-90 lg:h-96">
+                <Image
+                  src={imageEditing}
+                  alt="about-illustration"
+                  fill
+                  className="object-contain rounded-2xl"
+                />
+
+                {/* Floating tags updated to match the app */}
+                <div className="pointer-events-none">
+                  <div className="absolute top-6 left-10 bg-[#0f1724]/70 text-white px-4 py-3 rounded-md text-sm shadow-md">
+                    Layered Editing
+                  </div>
+                  <div className="absolute top-14 right-12 bg-[#0f1724]/70 text-white px-4 py-3 rounded-md text-sm shadow-md">
+                    AI Assistant
+                  </div>
+                  <div className="absolute bottom-12 left-16 bg-[#0f1724]/70 text-white px-4 py-3 rounded-md text-sm shadow-md">
+                    Background Removal
+                  </div>
+                  <div className="absolute bottom-20 right-6 bg-[#0f1724]/70 text-white px-4 py-3 rounded-md text-sm shadow-md">
+                    Open Source
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
