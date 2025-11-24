@@ -272,6 +272,8 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  
+
   useEffect(() => {
     drawCanvas();
   }, [layers, selectedLayerId]);
@@ -299,6 +301,7 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
       window.editorActions = undefined;
     };
   }, []);
+  
 
   const drawCanvas = (): void => {
     const canvas = canvasRef.current;
