@@ -25,6 +25,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
+import logo from "@/assets/logo.png";
 
 declare global {
   interface Window {
@@ -160,8 +162,8 @@ const ChatPanel = () => {
   };
 
   return (
-    <Card className="p-0 w-70 flex flex-col bg-neutral-800 border-neutral-600">
-      <div className="flex-none p-4 h-16 border-b border-neutral-600 font-semibold text-lg text-neutral-300">
+    <Card className="p-0 w-70 flex flex-col bg-neutral-900 border-neutral-600">
+      <div className="flex-none p-4 h-14 border-b border-neutral-600 font-semibold text-lg text-neutral-300">
         AI Assistant
       </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -170,7 +172,7 @@ const ChatPanel = () => {
             key={idx}
             className={`p-2 rounded-lg text-xs ${
               msg.sender === "user"
-                ? "bg-[#f2d7e4] text-black self-end ml-8"
+                ? "bg-[#e4aeb7] text-black self-end ml-8"
                 : "bg-neutral-100 text-neutral-700 mr-8"
             }`}
           >
@@ -782,7 +784,7 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
   };
 
   const handleGenerateImage = async () => {
-    setShowPromptModal(true);
+    toast("Prompt your Image to AI Assistant");
   };
 
   const addTextLayerFromAI = (text: string): void => {
@@ -927,17 +929,6 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
       // Dynamic import the browser package
       const { removeBackground } = await import("@imgly/background-removal");
 
-      // OPTION 1 — Use default CDN (recommended for quick start)
-      // const outputBlob = await removeBackground(blob);
-
-      // OPTION 2 — Use self-hosted models from your origin (if you copied models to /models/)
-      // If you use self-hosted models, you can set publicPath to `${location.origin}/models/`
-      // BUT note: some advanced WASM/threaded features require COOP/COEP headers for crossOriginIsolated.
-      // Example:
-      // const config = { publicPath: `${location.origin}/models/`, debug: true };
-      // const outputBlob = await removeBackground(blob, config);
-
-      // For now use CDN to avoid self-hosting complexity:
       const outputBlob = await removeBackground(blob, { debug: true });
 
       console.log(
@@ -1000,11 +991,11 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
 
   return (
     <div className="flex h-screen bg-neutral-900">
-      <Card className="w-60  border-r  p-0  bg-neutral-800 border-neutral-600">
-        <div className="flex-none p-4 border-b h-16 border-neutral-600 font-semibold text-lg text-neutral-300">
+      <Card className="w-60  border-r  p-0  bg-neutral-900 border-neutral-600">
+        <div className="flex-none p-4 border-b h-14 border-neutral-600 font-semibold text-lg text-neutral-300">
           Layers
         </div>
-        <div className="space-y-2 px-4">
+        <div className="space-y-1 px-3">
           {[...layers].reverse().map((layer, idx) => (
             <div
               key={layer.id}
@@ -1131,39 +1122,45 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
         </div>
       </Card>
 
-      <Card className="flex-1 flex flex-col  bg-neutral-800 border-neutral-600 p-0">
-        <div className="border-neutral-600 border-b h-16  p-4 flex gap-2">
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleImageUpload}
-            accept="image/*"
-            className="hidden"
+      <Card className="flex-1 flex flex-col  bg-neutral-900 border-neutral-600 p-0">
+        <div className="border-neutral-600 border-b h-14  p-2 flex justify-between gap-2">
+          <img
+            src={logo.src}
+            alt="AI Image"
+            width={45}
+            height={50}
+            className="relative rounded-2xl"
           />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="px-4 py-2 bg-[#b61b44] text-white rounded-lg hover:bg-[#811f39] text-xs flex items-center gap-2"
-          >
-            <Upload size={16} /> Add Image
-          </button>
-          <button
-            onClick={addTextLayer}
-            className="px-4 py-2 bg-[#b61b44] text-white rounded-lg text-xs hover:bg-[#811f39] flex items-center gap-2"
-          >
-            <Type size={16} /> Add Text
-          </button>
-          {/* <button
-            onClick={handleGenerateImage}
-            disabled={isGenerating}
-            className={`px-4 py-2 rounded text-white flex items-center gap-2 ${
-              isGenerating ? "bg-gray-400" : "bg-indigo-500 hover:bg-indigo-600"
-            }`}
-          >
-            <ImageIcon size={16} />
-            {isGenerating ? "Generating..." : "Generate Image"}
-          </button> */}
+          <div className="flex gap-2">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImageUpload}
+              accept="image/*"
+              className="hidden"
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="px-3 py-2 bg-[#b61b44] text-white rounded-lg hover:bg-[#811f39] text-xs flex items-center gap-2"
+            >
+              <Upload size={14} /> Add Image
+            </button>
+            <button
+              onClick={addTextLayer}
+              className="px-3 py-2 bg-[#b61b44] text-white rounded-lg text-xs hover:bg-[#811f39] flex items-center gap-2"
+            >
+              <Type size={14} /> Add Text
+            </button>
+            <button
+              onClick={handleGenerateImage}
+              disabled={isGenerating}
+              className="px-3 py-2 bg-[#b61b44] dark text-white rounded-lg text-xs hover:bg-[#811f39] flex items-center gap-2"
+            >
+              <ImageIcon size={14} />
+              {"Generate Image"}
+            </button>
 
-          {/* <button
+            {/* <button
             onClick={handleRemoveBg}
             disabled={isRemovingBg}
             className={`px-4 py-2 rounded text-white flex items-center gap-2 ${
@@ -1174,21 +1171,21 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
             {isRemovingBg ? "Removing..." : "Remove BG"}
           </button> */}
 
-          <div className="flex-1" />
-          <button
-            onClick={handleUndo}
-            className="px-4 py-2 bg-neutral-600 text-xs text-white rounded-lg hover:bg-neutral-700 flex items-center gap-2"
-          >
-            <Undo size={16} /> Undo
-          </button>
-          <button
-            onClick={exportImage}
-            className="px-4 py-2 bg-[#420065] text-white rounded-lg text-xs hover:bg-[#2a0041] flex items-center gap-2"
-          >
-            <Download size={16} /> Export
-          </button>
+            {/* <div className="flex-1" /> */}
+            <button
+              onClick={handleUndo}
+              className="px-3 py-2 bg-neutral-700 text-xs text-white rounded-lg hover:bg-neutral-700 flex items-center gap-2"
+            >
+              <Undo size={14} /> Undo
+            </button>
+            <button
+              onClick={exportImage}
+              className="px-3 py-2 bg-[#24005b] text-white rounded-lg text-xs hover:bg-[#2a0041] flex items-center gap-2"
+            >
+              <Download size={14} /> Export
+            </button>
+          </div>
         </div>
-
         <div className="flex-1 flex items-center justify-center p-8 overflow-auto">
           <div
             className="relative"
@@ -1223,8 +1220,8 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
         </div>
       </Card>
 
-      <Card className="w-64 border-l  p-0 overflow-y-auto bg-neutral-800 border-neutral-600">
-        <div className="flex-none p-4 h-16 border-b border-neutral-600 font-semibold text-lg text-neutral-300">
+      <Card className="w-64 border-l  p-0 overflow-y-auto bg-neutral-900 border-neutral-600">
+        <div className="flex-none p-4 h-14 border-b border-neutral-600 font-semibold text-lg text-neutral-300">
           Properties
         </div>
         {selectedLayer ? (
@@ -1415,7 +1412,7 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
                   onChange={(e) =>
                     updateSelectedLayer("x", parseInt(e.target.value))
                   }
-                  className="w-full mt-1 px-2 py-1 border rounded-lg text-xs border-neutral-500 text-neutral-300"
+                  className="w-full mt-1 px-3 py-2 border rounded-lg text-xs border-neutral-500 text-neutral-300"
                 />
               </div>
               <div>
@@ -1428,7 +1425,7 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
                   onChange={(e) =>
                     updateSelectedLayer("y", parseInt(e.target.value))
                   }
-                  className="w-full mt-1 px-2 py-1 border border-neutral-500 rounded-lg text-xs text-neutral-300"
+                  className="w-full mt-1 px-3 py-2 border border-neutral-500 rounded-lg text-xs text-neutral-300"
                 />
               </div>
             </div>
@@ -1445,7 +1442,7 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
                     onChange={(e) =>
                       updateSelectedLayer("width", parseInt(e.target.value))
                     }
-                    className="w-full mt-1 px-2 py-1 border border-neutral-500 rounded-lg text-neutral-300 text-xs"
+                    className="w-full mt-1 px-3 py-2 border border-neutral-500 rounded-lg text-neutral-300 text-xs"
                   />
                 </div>
                 <div>
@@ -1458,7 +1455,7 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
                     onChange={(e) =>
                       updateSelectedLayer("height", parseInt(e.target.value))
                     }
-                    className="w-full mt-1 px-2 py-1 border border-neutral-500 rounded-lg text-neutral-300 text-xs"
+                    className="w-full mt-1 px-3 py-2 border border-neutral-500 rounded-lg text-neutral-300 text-xs"
                   />
                 </div>
                 <div>
@@ -1542,12 +1539,12 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
             )}
           </div>
         ) : (
-          <div className="text-xs text-gray-400 text-center py-8">
+          <div className="text-xs text-neutral-400 text-center py-8">
             Select a layer to edit properties
           </div>
         )}
       </Card>
-      {showPromptModal && (
+      {/* {showPromptModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg w-96">
             <h3 className="text-lg font-semibold mb-4">Generate Image</h3>
@@ -1574,7 +1571,7 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
             </div>
           </div>
         </div>
-      )}
+      )} */}
       <ChatPanel />
     </div>
   );
