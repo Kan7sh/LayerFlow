@@ -3,16 +3,13 @@ import Link from "next/link";
 import Image from "next/image";
 import LogoImage from "@/assets/logo.png";
 import { useState } from "react";
-// import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-// import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { signOut, useSession } from "next-auth/react";
-// import { Separator } from "./ui/separator";
-// import { Toggle } from "./ui/toggle";
-// import { useTheme } from "@/store/context/ThemeContext";
+import { signIn, signOut, useSession } from "next-auth/react";
+import { FcGoogle } from "react-icons/fc";
+import router from "next/router";
+import { Spinner } from "./spinner";
 
 export default function GlassNavBar() {
-  const [isOpen, setIsOpen] = useState(false);
-  //   const { theme, toggleTheme } = useTheme();
+  const [isGooleLoginLoading, setIsGooleLoginLoading] = useState(false);
   const session = useSession();
   const scrollToAbout = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
@@ -25,29 +22,44 @@ export default function GlassNavBar() {
     }
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
-  };
+  if (session.status === "loading") {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center self-center">
+        <Spinner />
+      </div>
+    );
+  }
 
   async function logout() {
     await signOut();
   }
 
+  const signinWithGoogle = async () => {
+    console.log("okw");
+    if (isGooleLoginLoading) return;
+    console.log("inn");
+
+    setIsGooleLoginLoading(true);
+
+    const res = await signIn("google", { redirect: false });
+    setIsGooleLoginLoading(false);
+
+    if (res?.ok) {
+      router.push("/");
+    }
+  };
+
   return (
-    <nav className="fixed px-5 left-1/2 -translate-x-1/2 w-11/12 top-0 z-50 flex flex-col  items-center mt-7 bg-background/20 backdrop-blur-lg rounded-4xl  max-w-7xl">
+    <nav className="fixed    w-full top-0 z-50 flex flex-col  items-center px-5">
       <div className="flex justify-between items-center w-full">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Link href={"/"}>
             <Image
               src={LogoImage}
               alt="Logo Image"
               color=""
-              width={55}
-              height={55}
+              width={40}
+              height={46}
               className="m-2"
             />
           </Link>
@@ -55,58 +67,44 @@ export default function GlassNavBar() {
         </div>
         <div className="hidden md:block">
           <div className="flex flex-row justify-center items-center gap-8">
-            <a href="#about" onClick={scrollToAbout}>
+            {session.status == "authenticated" && (
+              <a
+                href="#about"
+                onClick={scrollToAbout}
+                className="text-sm font-medium text-white"
+              >
+                Playground
+              </a>
+            )}
+            <a
+              href="#about"
+              onClick={scrollToAbout}
+              className="text-sm font-medium text-white"
+            >
               About
             </a>
-            {/* <Toggle
-              pressed={theme === "dark"}
-              onPressedChange={toggleTheme}
-              variant="outline"
-              aria-label="Toggle dark mode"
-              size="sm"
-            >
-              {theme === "dark" ? (
-                <Sun className="size-4" />
-              ) : (
-                <MoonStar className="size-4" />
-              )}
-            </Toggle> */}
-            {/* <Popover>
-              <PopoverTrigger asChild>
-                <Avatar className="w-15 h-15 border-2 border-white">
-                  <AvatarImage src={session.data?.user.image ?? ""} />
-                  <AvatarFallback className="text-lg">
-                    {getInitials(session.data?.user.name ?? "")}
-                  </AvatarFallback>
-                </Avatar>
-              </PopoverTrigger>
-              <PopoverContent className="bg-[linear-gradient(to_bottom,_#141414,_#141414,_#141414,_#141414)] rounded-3xl  border-none">
-                <div className="flex flex-col items-center">
-                  <h4 className="leading-none font-medium">
-                    Hello! {session.data?.user.name}
-                  </h4>
-                  <p className="text-muted-foreground text-sm mt-2">
-                    {session.data?.user.email}
-                  </p>
-                </div>
-                <div className="flex flex-col mt-4 gap-2">
-                 
-                </div>
-              </PopoverContent>
-            </Popover> */}
+            {session.status == "authenticated" && (
+              <div
+                className="bg-neutral-900 text-xs  text-white font-medium rounded-lg px-3 py-2 cursor-pointer"
+                onClick={logout}
+              >
+                Logout
+              </div>
+            )}
+            {session.status == "unauthenticated" && (
+              <div
+                className="bg-neutral-900 text-xs  text-white font-medium rounded-lg px-3 py-2 flex gap-2 cursor-pointer"
+                onClick={signinWithGoogle}
+              >
+                <FcGoogle className={`w-4 h-4`} />
+                Login
+              </div>
+            )}
           </div>
         </div>
 
         <div className="md:hidden"></div>
       </div>
-      {isOpen && (
-        <div className="flex flex-col items-center justify-center gap-3 px-5 py-3 md:hidden">
-          <Link href={"/editprofile"}> Edit Profile</Link>
-          <div onClick={logout} className="text-red-700 cursor-pointer">
-            Logout
-          </div>
-        </div>
-      )}
     </nav>
   );
 }

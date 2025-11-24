@@ -26,7 +26,7 @@ export default function PlaygroundPage() {
   }
 
   if (session.status === "unauthenticated") {
-    redirect("/login");
+    redirect("/");
   }
 
   return (
