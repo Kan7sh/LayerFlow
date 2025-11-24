@@ -81,13 +81,77 @@ export default function Home() {
               </div>
               <div className="mt-4 inline-block">
                 <div className="playground-glow-wrapper rounded-xl">
-                  <Button className="w-50 h-14 bg-[#1a004e] relative z-10 overflow-hidden">
+                  <Button
+                    onClick={() => setShowModal(true)}
+                    className="w-50 h-14 bg-[#1a004e] hover:bg-[#130037] relative z-10 overflow-hidden"
+                  >
                     Playground
                   </Button>
                 </div>
               </div>
             </div>
           </div>
+
+          <Dialog open={showModal} onOpenChange={setShowModal}>
+            <DialogContent className="bg-[#0d0d0d] text-white border border-neutral-700 rounded-2xl">
+              <DialogHeader>
+                <DialogTitle className="text-xl font-bold">
+                  Start a New Canvas
+                </DialogTitle>
+                <DialogDescription className="text-gray-400">
+                  Choose your canvas size or use a preset to jump right in.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="mt-4 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  {aspectPresets.map((preset) => (
+                    <button
+                      key={preset.name}
+                      onClick={() => {
+                        setWidth(preset.width);
+                        setHeight(preset.height);
+                        setSelectedPreset(preset.name);
+                      }}
+                      className={`p-3 rounded-lg border text-sm transition-all ${
+                        selectedPreset === preset.name
+                          ? "bg-[#cf486c]/20 border-[#cf486c]"
+                          : "border-gray-700 hover:border-gray-500"
+                      }`}
+                    >
+                      {preset.name}
+                    </button>
+                  ))}
+                </div>
+
+                <div>
+                  <label className="text-sm">Width</label>
+                  <input
+                    type="number"
+                    value={width}
+                    onChange={(e) => setWidth(Number(e.target.value))}
+                    className="w-full bg-black border border-gray-700 rounded-md p-2 mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm">Height</label>
+                  <input
+                    type="number"
+                    value={height}
+                    onChange={(e) => setHeight(Number(e.target.value))}
+                    className="w-full bg-black border border-gray-700 rounded-md p-2 mt-1"
+                  />
+                </div>
+
+                <Button
+                  onClick={handleStartPlayground}
+                  className="w-full bg-[#b61b44] hover:bg-[#620720] text-white h-12 rounded-xl"
+                >
+                  Start Editing
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <div
             className=" flex-1 h-[75vh]"
@@ -103,7 +167,6 @@ export default function Home() {
                 transformStyle: "preserve-3d",
               }}
             >
-              {/* Glowing border effects */}
               <div
                 className="absolute inset-0 rounded-3xl  border-[#cf486c] opacity-70 blur-lg"
                 style={{ transform: "translateZ(-10px)" }}
@@ -113,7 +176,6 @@ export default function Home() {
                 style={{ transform: "translateZ(-5px)" }}
               ></div>
 
-              {/* Main image - made explicitly rounded */}
               <div className="relative rounded-3xl overflow-hidden shadow-2xl w-full h-full">
                 <Image
                   src={homeImage}
@@ -165,7 +227,6 @@ export default function Home() {
                   className="object-contain rounded-2xl"
                 />
 
-                {/* Floating tags updated to match the app */}
                 <div className="pointer-events-none">
                   <div className="absolute top-6 left-10 bg-[#0f1724]/70 text-white px-4 py-3 rounded-md text-sm shadow-md">
                     Layered Editing
