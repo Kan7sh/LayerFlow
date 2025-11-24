@@ -128,7 +128,6 @@
     @apply bg-background text-foreground;
   }
 
-  /* Fix for dialog scrollbar layout shift */
   html {
     overflow-y: scroll !important;
     scrollbar-gutter: stable;
@@ -138,19 +137,16 @@
     overflow-x: hidden;
   }
 
-  /* Prevent Radix from adding padding/margin when dialog opens */
   body[style] {
     padding-right: 0 !important;
     margin-right: 0 !important;
   }
 
-  /* Also prevent it on html */
   html[style] {
     padding-right: 0 !important;
     margin-right: 0 !important;
   }
 
-  /* Ensure fixed elements don't shift */
   nav[style] {
     padding-right: 0 !important;
     margin-right: 0 !important;

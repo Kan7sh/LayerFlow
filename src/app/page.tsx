@@ -1,7 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { FcGoogle } from "react-icons/fc";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import DarkVeil from "@/components/background/DarkVeil";
@@ -16,12 +15,12 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 export default function Home() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const session = useSession();
 
   const [showModal, setShowModal] = useState(false);
   const [width, setWidth] = useState(800);
@@ -37,17 +36,6 @@ export default function Home() {
     { name: "UltraWide 21:9", width: 1920, height: 820 },
   ];
 
-  async function logout() {
-    await signOut();
-  }
-
-  const signinWithGoogle = async () => {
-    const res = await signIn("google", { redirect: false });
-    if (res?.ok) {
-      router.push("/");
-    }
-  };
-
   const handleStartPlayground = () => {
     setShowModal(false);
     router.push(`/playground?width=${width}&height=${height}`);
@@ -59,7 +47,7 @@ export default function Home() {
         <div className="absolute inset-0 z-0">
           <DarkVeil colorStops={["#811f39", "#cf486c", "#b61b44"]} />
         </div>
-        <GlassNavBar setShowModal={setShowModal} />
+        <GlassNavBar />
 
         <div className="relative z-10 flex flex-row justify-center items-center h-full  px-6 py-3">
           <div className=" flex-1  p-6 py-20">
@@ -82,7 +70,16 @@ export default function Home() {
               <div className="mt-4 inline-block">
                 <div className="playground-glow-wrapper rounded-xl">
                   <Button
-                    onClick={() => setShowModal(true)}
+                    onClick={() => {
+                      if (
+                        session.status === "unauthenticated" ||
+                        session.status === "loading"
+                      ) {
+                        toast.warning("Login to start using the playground");
+                        return;
+                      }
+                      setShowModal(true);
+                    }}
                     className="w-50 h-14 bg-[#1a004e] hover:bg-[#130037] relative z-10 overflow-hidden"
                   >
                     Playground
@@ -186,8 +183,6 @@ export default function Home() {
                   priority
                 />
               </div>
-
-              {/* Shadow effect */}
             </div>
           </div>
         </div>

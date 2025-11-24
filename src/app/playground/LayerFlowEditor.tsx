@@ -9,7 +9,6 @@ import {
   EyeOff,
   ChevronUp,
   ChevronDown,
-  Eraser,
   Undo,
   ImageIcon,
 } from "lucide-react";
@@ -21,7 +20,6 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -272,8 +270,6 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  
-
   useEffect(() => {
     drawCanvas();
   }, [layers, selectedLayerId]);
@@ -301,7 +297,6 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
       window.editorActions = undefined;
     };
   }, []);
-  
 
   const drawCanvas = (): void => {
     const canvas = canvasRef.current;
@@ -910,14 +905,12 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
 
     setIsRemovingBg(true);
     try {
-      // Draw selected image onto a temporary canvas (same as you already do)
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d")!;
       canvas.width = selectedLayer.width!;
       canvas.height = selectedLayer.height!;
       ctx.drawImage(selectedLayer.imageData, 0, 0, canvas.width, canvas.height);
 
-      // Convert to Blob
       const blob: Blob | null = await new Promise((resolve) =>
         canvas.toBlob((b) => resolve(b), "image/png")
       );
@@ -925,21 +918,19 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
       if (!blob) throw new Error("Failed to create blob from canvas");
 
       console.log(
-        "🛰️ Calling background-removal in browser, blob size:",
+        " Calling background-removal in browser, blob size:",
         blob.size
       );
 
-      // Dynamic import the browser package
       const { removeBackground } = await import("@imgly/background-removal");
 
       const outputBlob = await removeBackground(blob, { debug: true });
 
       console.log(
-        "✅ Background removal finished, size:",
+        " Background removal finished, size:",
         outputBlob.size || "(unknown)"
       );
 
-      // Convert outputBlob to Image and update layer (same approach as before)
       const imgUrl = URL.createObjectURL(outputBlob);
       const newImg = new Image();
 
@@ -950,7 +941,6 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
         newImg.src = imgUrl;
       });
 
-      // Update layers: keep original in originalImageData for undo
       setLayers((prev) =>
         prev.map((layer) =>
           layer.id === selectedLayer.id
@@ -1162,19 +1152,6 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
               <ImageIcon size={14} />
               {"Generate Image"}
             </button>
-
-            {/* <button
-            onClick={handleRemoveBg}
-            disabled={isRemovingBg}
-            className={`px-4 py-2 rounded text-white flex items-center gap-2 ${
-              isRemovingBg ? "bg-gray-400" : "bg-red-500 hover:bg-red-600"
-            }`}
-          >
-            <Eraser size={16} />
-            {isRemovingBg ? "Removing..." : "Remove BG"}
-          </button> */}
-
-            {/* <div className="flex-1" /> */}
             <button
               onClick={handleUndo}
               className="px-3 py-2 bg-neutral-700 text-xs text-white rounded-lg hover:bg-neutral-800 flex items-center gap-2"
@@ -1547,34 +1524,6 @@ const LayerflowEditor: React.FC<LayerflowEditorProps> = ({
           </div>
         )}
       </Card>
-      {/* {showPromptModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg w-96">
-            <h3 className="text-lg font-semibold mb-4">Generate Image</h3>
-            <textarea
-              value={promptText}
-              onChange={(e) => setPromptText(e.target.value)}
-              placeholder="Describe the image..."
-              className="w-full border rounded p-2 mb-4 h-24"
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowPromptModal(false)}
-                className="px-4 py-2 rounded border"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => generateImage()}
-                disabled={isGenerating}
-                className="px-4 py-2 bg-blue-600 text-white rounded"
-              >
-                {isGenerating ? "Generating..." : "Generate"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )} */}
       <ChatPanel />
     </div>
   );
